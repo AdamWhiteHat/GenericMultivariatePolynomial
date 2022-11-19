@@ -237,17 +237,17 @@ namespace ExtendedArithmetic
 			return _absFunction.Invoke(input);
 		}
 
-		public static T Sign(T input)
+		public static int Sign(T input)
 		{
 			if (GreaterThan(input, Zero))
 			{
-				return One;
+				return 1;
 			}
 			else if (LessThan(input, Zero))
 			{
-				return MinusOne;
+				return -1;
 			}
-			return Zero;
+			return 0;
 		}
 
 		public static T DivRem(T dividend, T divisor, out T remainder)

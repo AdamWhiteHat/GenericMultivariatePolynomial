@@ -5,24 +5,24 @@ using System.Collections.Generic;
 
 namespace ExtendedArithmetic
 {
-	public class Term : ICloneable<Term>, IEquatable<Term>, IEqualityComparer<Term>
+	public class Term<T> : ICloneable<Term<T>>, IEquatable<Term<T>>, IEqualityComparer<Term<T>>
 	{
-		public BigInteger CoEfficient { get; }
+		public T CoEfficient { get; }
 		public Indeterminate[] Variables { get; private set; }
 		public int Degree { get { return Variables.Any() ? Variables.Select(v => v.Exponent).Sum() : 0; } }
 
-		public static Term Empty = new Term(BigInteger.Zero, new Indeterminate[0]);
-		internal static Term Zero = new Term(BigInteger.Zero, new Indeterminate[] { new Indeterminate('X', 0) });
+		public static Term<T> Empty = new Term<T>(GenericArithmetic<T>.Zero, new Indeterminate[0]);
+		internal static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, new Indeterminate[] { new Indeterminate('X', 0) });
 
 		#region Constructor & Parse
 
-		public Term(BigInteger coefficient, Indeterminate[] variables)
+		public Term(T coefficient, Indeterminate[] variables)
 		{
-			CoEfficient = coefficient.Clone();
+			CoEfficient = coefficient;
 			Variables = CloneHelper<Indeterminate>.CloneCollection(variables).ToArray();
 		}
 
-		internal static Term Parse(string termString)
+		internal static Term<T> Parse(string termString)
 		{
 			if (string.IsNullOrWhiteSpace(termString)) { throw new ArgumentException(); }
 
@@ -31,36 +31,36 @@ namespace ExtendedArithmetic
 
 			string[] parts = input.Split(new char[] { '*' });
 
-			BigInteger coefficient = BigInteger.One;
+			T coefficient = GenericArithmetic<T>.One;
 			if (parts[0].All(c => c == '-' || char.IsDigit(c)))
 			{
-				coefficient = BigInteger.Parse(parts[0]);
+				coefficient = GenericArithmetic<T>.Parse(parts[0]);
 				parts = parts.Skip(1).ToArray();
 			}
 			else if (parts[0].StartsWith("-") && parts[0].Any(c => char.IsLetter(c)))
 			{
-				coefficient = BigInteger.MinusOne;
+				coefficient = GenericArithmetic<T>.MinusOne;
 				parts[0] = parts[0].Replace("-", "");
 			}
 
 			Indeterminate[] variables = parts.Select(str => Indeterminate.Parse(str)).ToArray();
 
-			return new Term(coefficient, variables);
+			return new Term<T>(coefficient, variables);
 		}
 
 		#endregion
 
 		#region Internal Helper Methods
 
-		internal static bool ShareCommonFactor(Term left, Term right)
+		internal static bool ShareCommonFactor(Term<T> left, Term<T> right)
 		{
 			if (left == null || right == null) { throw new ArgumentNullException(); }
 			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv)))) { return false; }
-			if (right.CoEfficient != 1 && (left.CoEfficient % right.CoEfficient != 0)) { return false; }
+			if (!GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One) && (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero))) { return false; }
 			return true;
 		}
 
-		internal static bool AreIdentical(Term left, Term right)
+		internal static bool AreIdentical(Term<T> left, Term<T> right)
 		{
 			if (left == null || right == null) { throw new ArgumentNullException(); }
 			if (left.Variables.Length != right.Variables.Length) { return false; }
@@ -95,29 +95,29 @@ namespace ExtendedArithmetic
 
 		#region Arithmetic
 
-		public static Term Add(Term left, Term right)
+		public static Term<T> Add(Term<T> left, Term<T> right)
 		{
 			if (!AreIdentical(left, right))
 			{
 				//throw new ArgumentException("Terms are incompatable for adding; Their indeterminates must match.");
 				return Empty;
 			}
-			return new Term(BigInteger.Add(left.CoEfficient, right.CoEfficient), left.Variables);
+			return new Term<T>(GenericArithmetic<T>.Add(left.CoEfficient, right.CoEfficient), left.Variables);
 		}
 
-		public static Term Subtract(Term left, Term right)
+		public static Term<T> Subtract(Term<T> left, Term<T> right)
 		{
 			return Add(left, Negate(right));
 		}
 
-		public static Term Negate(Term term)
+		public static Term<T> Negate(Term<T> term)
 		{
-			return new Term(BigInteger.Negate(term.CoEfficient), term.Variables);
+			return new Term<T>(GenericArithmetic<T>.Negate(term.CoEfficient), term.Variables);
 		}
 
-		public static Term Multiply(Term left, Term right)
+		public static Term<T> Multiply(Term<T> left, Term<T> right)
 		{
-			BigInteger resultCoefficient = BigInteger.Multiply(left.CoEfficient, right.CoEfficient);
+			T resultCoefficient = GenericArithmetic<T>.Multiply(left.CoEfficient, right.CoEfficient);
 			List<Indeterminate> resultVariables = new List<Indeterminate>();
 
 			List<Indeterminate> rightVariables = right.Variables.ToList();
@@ -151,14 +151,14 @@ namespace ExtendedArithmetic
 
 			resultVariables = resultVariables.OrderBy(indt => indt.Symbol).ThenBy(indt => indt.Exponent).ToList();
 
-			return new Term(resultCoefficient, resultVariables.ToArray());
+			return new Term<T>(resultCoefficient, resultVariables.ToArray());
 		}
 
-		public static Term Divide(Term left, Term right)
+		public static Term<T> Divide(Term<T> left, Term<T> right)
 		{
-			if (!Term.ShareCommonFactor(left, right)) { return Empty; }
+			if (!Term<T>.ShareCommonFactor(left, right)) { return Empty; }
 
-			BigInteger newCoefficient = BigInteger.Divide(left.CoEfficient, right.CoEfficient);
+			T newCoefficient = GenericArithmetic<T>.Divide(left.CoEfficient, right.CoEfficient);
 
 			List<Indeterminate> newVariables = new List<Indeterminate>();
 			int max = left.Variables.Length;
@@ -182,7 +182,7 @@ namespace ExtendedArithmetic
 				}
 				index++;
 			}
-			Term result = new Term(newCoefficient, newVariables.ToArray());
+			Term<T> result = new Term<T>(newCoefficient, newVariables.ToArray());
 			return result;
 		}
 
@@ -190,19 +190,19 @@ namespace ExtendedArithmetic
 
 		#region Overrides and Interface implementations
 
-		public Term Clone()
+		public Term<T> Clone()
 		{
-			return new Term(CoEfficient.Clone(), CloneHelper<Indeterminate>.CloneCollection(Variables).ToArray());
+			return new Term<T>(GenericArithmetic<T>.Clone(CoEfficient), CloneHelper<Indeterminate>.CloneCollection(Variables).ToArray());
 		}
-		public bool Equals(Term other)
+		public bool Equals(Term<T> other)
 		{
 			return this.Equals(this, other);
 		}
 
-		public bool Equals(Term x, Term y)
+		public bool Equals(Term<T> x, Term<T> y)
 		{
 			if (x == null) { return (y == null) ? true : false; }
-			if (x.CoEfficient != y.CoEfficient) { return false; }
+			if (!GenericArithmetic<T>.Equals(x.CoEfficient, y.CoEfficient)) { return false; }
 			if (!x.Variables.Any()) { return (!y.Variables.Any()) ? true : false; }
 			if (x.Variables.Length != y.Variables.Length) { return false; }
 
@@ -216,10 +216,10 @@ namespace ExtendedArithmetic
 
 		public override bool Equals(object obj)
 		{
-			return this.Equals(obj as Term);
+			return this.Equals(obj as Term<T>);
 		}
 
-		public int GetHashCode(Term obj)
+		public int GetHashCode(Term<T> obj)
 		{
 			return obj.GetHashCode();
 		}
@@ -244,7 +244,7 @@ namespace ExtendedArithmetic
 
 		public override string ToString()
 		{
-			if (CoEfficient == 0)
+			if (GenericArithmetic<T>.Equal(CoEfficient, GenericArithmetic<T>.Zero))
 			{
 				return "0";
 			}
@@ -258,12 +258,12 @@ namespace ExtendedArithmetic
 			{
 				variableString = string.Join("*", Variables.Select(v => v.ToString()));
 			}
-			else if (BigInteger.Abs(CoEfficient) == 1)
+			else if (GenericArithmetic<T>.Equal(GenericArithmetic<T>.Abs(CoEfficient), GenericArithmetic<T>.One))
 			{
 				coefficientString = CoEfficient.ToString();
 			}
 
-			if (BigInteger.Abs(CoEfficient) != 1)
+			if (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Abs(CoEfficient), GenericArithmetic<T>.One))
 			{
 				if (Variables.Any())
 				{
@@ -271,7 +271,7 @@ namespace ExtendedArithmetic
 				}
 				coefficientString = CoEfficient.ToString();
 			}
-			else if (Variables.Any() && CoEfficient.Sign == -1)
+			else if (Variables.Any() && GenericArithmetic<T>.Sign(CoEfficient) == -1)
 			{
 				coefficientString = "-";
 			}

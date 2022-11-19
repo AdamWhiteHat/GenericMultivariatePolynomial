@@ -5,27 +5,27 @@ using System.Collections.Generic;
 
 namespace ExtendedArithmetic
 {
-	public class MultivariatePolynomial
+	public class MultivariatePolynomial<T> : ICloneable<MultivariatePolynomial<T>>
 	{
-		public Term[] Terms { get; private set; }
+		public Term<T>[] Terms { get; private set; }
 		public int Degree { get { return Terms.Any() ? Terms.Select(t => t.Degree).Max() : 0; } }
 
 		#region Constructor & Parse
 
-		public MultivariatePolynomial(Term[] terms)
+		public MultivariatePolynomial(Term<T>[] terms)
 		{
-			IEnumerable<Term> newTerms = terms?.Where(trm => trm.CoEfficient != 0) ?? new Term[0];
+			IEnumerable<Term<T>> newTerms = terms?.Where(trm => !GenericArithmetic<T>.Equal(trm.CoEfficient, GenericArithmetic<T>.Zero)) ?? new Term<T>[0];
 			if (!newTerms.Any())
 			{
-				Terms = new Term[] { Term.Zero };
+				Terms = new Term<T>[] { Term<T>.Zero };
 				return;
 			}
 
-			Terms = CloneHelper<Term>.CloneCollection(newTerms).ToArray();
+			Terms = CloneHelper<Term<T>>.CloneCollection(newTerms).ToArray();
 			OrderMonomials();
 		}
 
-		public static MultivariatePolynomial Parse(string polynomialString)
+		public static MultivariatePolynomial<T> Parse(string polynomialString)
 		{
 			string input = polynomialString;
 			if (string.IsNullOrWhiteSpace(input)) { throw new ArgumentException(); }
@@ -36,26 +36,26 @@ namespace ExtendedArithmetic
 
 			if (!stringTerms.Any()) { throw new FormatException(); }
 
-			Term[] terms = stringTerms.Select(str => Term.Parse(str)).ToArray();
+			Term<T>[] terms = stringTerms.Select(str => Term<T>.Parse(str)).ToArray();
 
-			return new MultivariatePolynomial(terms);
+			return new MultivariatePolynomial<T>(terms);
 		}
 
-		public static MultivariatePolynomial GetDerivative(MultivariatePolynomial poly, char symbol)
+		public static MultivariatePolynomial<T> GetDerivative(MultivariatePolynomial<T> poly, char symbol)
 		{
-			List<Term> resultTerms = new List<Term>();
-			foreach (Term term in poly.Terms)
+			List<Term<T>> resultTerms = new List<Term<T>>();
+			foreach (Term<T> term in poly.Terms)
 			{
 				if (term.Variables.Any() && term.Variables.Any(indt => indt.Symbol == symbol))
 				{
-					BigInteger newTerm_Coefficient = 0;
+					T newTerm_Coefficient = GenericArithmetic<T>.Zero;
 					List<Indeterminate> newTerm_Variables = new List<Indeterminate>();
 
 					foreach (Indeterminate variable in term.Variables)
 					{
 						if (variable.Symbol == symbol)
 						{
-							newTerm_Coefficient = term.CoEfficient * variable.Exponent;
+							newTerm_Coefficient = GenericArithmetic<T>.Multiply(term.CoEfficient, GenericArithmetic<T>.Convert<int>(variable.Exponent));
 
 							int newExponent = variable.Exponent - 1;
 							if (newExponent > 0)
@@ -69,11 +69,11 @@ namespace ExtendedArithmetic
 						}
 					}
 
-					resultTerms.Add(new Term(newTerm_Coefficient, newTerm_Variables.ToArray()));
+					resultTerms.Add(new Term<T>(newTerm_Coefficient, newTerm_Variables.ToArray()));
 				}
 			}
 
-			return new MultivariatePolynomial(resultTerms.ToArray());
+			return new MultivariatePolynomial<T>(resultTerms.ToArray());
 		}
 
 		private void OrderMonomials()
@@ -97,26 +97,26 @@ namespace ExtendedArithmetic
 			return this.Terms.Any(t => t.HasVariables());
 		}
 
-		internal BigInteger MaxCoefficient()
+		internal T MaxCoefficient()
 		{
 			if (HasVariables())
 			{
 				var termsWithVariables = this.Terms.Select(t => t).Where(t => t.HasVariables());
 				return termsWithVariables.Select(t => t.CoEfficient).Max();
 			}
-			return -1;
+			return GenericArithmetic<T>.MinusOne;
 		}
 
 		#endregion
 
 		#region Evaluate
 
-		public BigInteger Evaluate(List<Tuple<char, BigInteger>> indeterminateValues)
+		public T Evaluate(List<Tuple<char, T>> indeterminateValues)
 		{
-			BigInteger result = new BigInteger(0);
-			foreach (Term term in Terms)
+			T result = GenericArithmetic<T>.Zero;
+			foreach (Term<T> term in Terms)
 			{
-				BigInteger termValue = term.CoEfficient.Clone();
+				T termValue = term.CoEfficient;
 
 				if (term.Variables.Any())
 				{
@@ -124,64 +124,14 @@ namespace ExtendedArithmetic
 						term.Variables
 						.Select(indetrmnt =>
 							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
-											  .Select(tup => BigInteger.Pow(tup.Item2, indetrmnt.Exponent))
+											  .Select(tup => GenericArithmetic<T>.Power(tup.Item2, indetrmnt.Exponent))
 											  .Single()
 						);
 
-					termValue = BigInteger.Multiply(termValue, variableValues.Aggregate(BigInteger.Multiply));
+					termValue = GenericArithmetic<T>.Multiply(termValue, variableValues.Aggregate(GenericArithmetic<T>.Multiply));
 				}
 
-				result = BigInteger.Add(result, termValue);
-			}
-			return result;
-		}
-
-		public double Evaluate(List<Tuple<char, double>> indeterminateValues)
-		{
-			double result = 0;
-			foreach (Term term in Terms)
-			{
-				double termValue = (double)term.CoEfficient.Clone();
-
-				if (term.Variables.Any())
-				{
-					var variableValues =
-						term.Variables
-						.Select(indetrmnt =>
-							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
-											  .Select(tup => Math.Pow(tup.Item2, indetrmnt.Exponent))
-											  .Single()
-						);
-
-					termValue *= variableValues.Aggregate((l, r) => l * r);
-				}
-
-				result += termValue;
-			}
-			return result;
-		}
-
-		public Complex Evaluate(List<Tuple<char, Complex>> indeterminateValues)
-		{
-			Complex result = 0;
-			foreach (Term term in Terms)
-			{
-				Complex termValue = new Complex((double)term.CoEfficient.Clone(), 0);
-
-				if (term.Variables.Any())
-				{
-					var variableValues =
-						term.Variables
-						.Select(indetrmnt =>
-							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
-											  .Select(tup => Complex.Pow(tup.Item2, (double)indetrmnt.Exponent))
-											  .Single()
-						);
-
-					termValue *= variableValues.Aggregate((l, r) => l * r);
-				}
-
-				result += termValue;
+				result = GenericArithmetic<T>.Add(result, termValue);
 			}
 			return result;
 		}
@@ -190,23 +140,23 @@ namespace ExtendedArithmetic
 		/// Like the Evaluate method, except it replaces indeterminates with Polynomials instead of integers,
 		/// and returns the resulting (usually large) Polynomial
 		/// </summary>
-		public MultivariatePolynomial FunctionalComposition(List<Tuple<char, MultivariatePolynomial>> indeterminateValues)
+		public MultivariatePolynomial<T> FunctionalComposition(List<Tuple<char, MultivariatePolynomial<T>>> indeterminateValues)
 		{
-			List<Term> terms = this.Terms.ToList();
-			List<MultivariatePolynomial> composedTerms = new List<MultivariatePolynomial>();
+			List<Term<T>> terms = this.Terms.ToList();
+			List<MultivariatePolynomial<T>> composedTerms = new List<MultivariatePolynomial<T>>();
 
-			foreach (Term trm in terms)
+			foreach (Term<T> trm in terms)
 			{
-				MultivariatePolynomial constant = MultivariatePolynomial.Parse(trm.CoEfficient.ToString());
-				List<MultivariatePolynomial> toCompose = new List<MultivariatePolynomial>();
+				MultivariatePolynomial<T> constant = MultivariatePolynomial<T>.Parse(trm.CoEfficient.ToString());
+				List<MultivariatePolynomial<T>> toCompose = new List<MultivariatePolynomial<T>>();
 				toCompose.Add(constant.Clone());
 				foreach (Indeterminate variable in trm.Variables)
 				{
 					int exp = variable.Exponent;
-					MultivariatePolynomial valueOfIndeterminate = indeterminateValues.Where(tup => tup.Item1 == variable.Symbol).Select(tup => tup.Item2).FirstOrDefault();
+					MultivariatePolynomial<T> valueOfIndeterminate = indeterminateValues.Where(tup => tup.Item1 == variable.Symbol).Select(tup => tup.Item2).FirstOrDefault();
 					if (valueOfIndeterminate == null)
 					{
-						MultivariatePolynomial thisVariableAsPoly = new MultivariatePolynomial(new Term[] { new Term(BigInteger.One, new Indeterminate[] { variable }) });
+						MultivariatePolynomial<T> thisVariableAsPoly = new MultivariatePolynomial<T>(new Term<T>[] { new Term<T>(GenericArithmetic<T>.One, new Indeterminate[] { variable }) });
 						toCompose.Add(thisVariableAsPoly);
 					}
 					else if (exp == 0) { continue; }
@@ -216,15 +166,15 @@ namespace ExtendedArithmetic
 					}
 					else
 					{
-						MultivariatePolynomial toMultiply = MultivariatePolynomial.Pow(valueOfIndeterminate, exp);
+						MultivariatePolynomial<T> toMultiply = MultivariatePolynomial<T>.Pow(valueOfIndeterminate, exp);
 						toCompose.Add(toMultiply);
 					}
 				}
-				MultivariatePolynomial composed = MultivariatePolynomial.Product(toCompose);
+				MultivariatePolynomial<T> composed = MultivariatePolynomial<T>.Product(toCompose);
 				composedTerms.Add(composed);
 			}
 
-			MultivariatePolynomial result = MultivariatePolynomial.Sum(composedTerms);
+			MultivariatePolynomial<T> result = MultivariatePolynomial<T>.Sum(composedTerms);
 			return result;
 		}
 
@@ -232,14 +182,14 @@ namespace ExtendedArithmetic
 
 		#region Arithmetic
 
-		public static MultivariatePolynomial GCD(MultivariatePolynomial left, MultivariatePolynomial right)
+		public static MultivariatePolynomial<T> GCD(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			MultivariatePolynomial dividend = left.Clone();
-			MultivariatePolynomial divisor = right.Clone();
-			MultivariatePolynomial quotient;
-			MultivariatePolynomial remainder;
-			BigInteger dividendLeadingCoefficient = 0;
-			BigInteger divisorLeadingCoefficient = 0;
+			MultivariatePolynomial<T> dividend = left.Clone();
+			MultivariatePolynomial<T> divisor = right.Clone();
+			MultivariatePolynomial<T> quotient;
+			MultivariatePolynomial<T> remainder;
+			T dividendLeadingCoefficient = GenericArithmetic<T>.Zero;
+			T divisorLeadingCoefficient = GenericArithmetic<T>.Zero;
 
 			bool swap = false;
 
@@ -254,23 +204,23 @@ namespace ExtendedArithmetic
 				{
 					swap = true;
 				}
-				else if (dividend.Degree == divisor.Degree && dividendLeadingCoefficient < divisorLeadingCoefficient)
+				else if ((dividend.Degree == divisor.Degree) && GenericArithmetic<T>.LessThan(dividendLeadingCoefficient, divisorLeadingCoefficient))
 				{
 					swap = true;
 				}
 
 				if (swap)
 				{
-					MultivariatePolynomial temp = dividend.Clone();
+					MultivariatePolynomial<T> temp = dividend.Clone();
 					dividend = divisor;
 					divisor = temp.Clone();
 				}
 
-				quotient = MultivariatePolynomial.Divide(dividend, divisor);
+				quotient = MultivariatePolynomial<T>.Divide(dividend, divisor);
 				dividend = quotient.Clone();
 
 			}
-			while (BigInteger.Abs(dividendLeadingCoefficient) > 0 && BigInteger.Abs(divisorLeadingCoefficient) > 0 && dividend.HasVariables() && divisor.HasVariables());
+			while (GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(dividendLeadingCoefficient), GenericArithmetic<T>.Zero) && GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(divisorLeadingCoefficient), GenericArithmetic<T>.Zero) && dividend.HasVariables() && divisor.HasVariables());
 
 			if (dividend.HasVariables())
 			{
@@ -282,10 +232,10 @@ namespace ExtendedArithmetic
 			}
 		}
 
-		public static MultivariatePolynomial Sum(IEnumerable<MultivariatePolynomial> polys)
+		public static MultivariatePolynomial<T> Sum(IEnumerable<MultivariatePolynomial<T>> polys)
 		{
-			MultivariatePolynomial result = null;
-			foreach (MultivariatePolynomial p in polys)
+			MultivariatePolynomial<T> result = null;
+			foreach (MultivariatePolynomial<T> p in polys)
 			{
 				if (result == null)
 				{
@@ -293,16 +243,16 @@ namespace ExtendedArithmetic
 				}
 				else
 				{
-					result = MultivariatePolynomial.Add(result, p);
+					result = MultivariatePolynomial<T>.Add(result, p);
 				}
 			}
 			return result;
 		}
 
-		public static MultivariatePolynomial Product(IEnumerable<MultivariatePolynomial> polys)
+		public static MultivariatePolynomial<T> Product(IEnumerable<MultivariatePolynomial<T>> polys)
 		{
-			MultivariatePolynomial result = null;
-			foreach (MultivariatePolynomial p in polys)
+			MultivariatePolynomial<T> result = null;
+			foreach (MultivariatePolynomial<T> p in polys)
 			{
 				if (result == null)
 				{
@@ -310,36 +260,36 @@ namespace ExtendedArithmetic
 				}
 				else
 				{
-					result = MultivariatePolynomial.Multiply(result, p);
+					result = MultivariatePolynomial<T>.Multiply(result, p);
 				}
 			}
 			return result;
 		}
 
-		public static MultivariatePolynomial Add(MultivariatePolynomial left, MultivariatePolynomial right)
+		public static MultivariatePolynomial<T> Add(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			return OneToOneArithmetic(left, right, Term.Add);
+			return OneToOneArithmetic(left, right, Term<T>.Add);
 		}
 
-		public static MultivariatePolynomial Subtract(MultivariatePolynomial left, MultivariatePolynomial right)
+		public static MultivariatePolynomial<T> Subtract(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			return OneToOneArithmetic(left, right, Term.Subtract);
+			return OneToOneArithmetic(left, right, Term<T>.Subtract);
 		}
 
-		private static MultivariatePolynomial OneToOneArithmetic(MultivariatePolynomial left, MultivariatePolynomial right, Func<Term, Term, Term> operation)
+		private static MultivariatePolynomial<T> OneToOneArithmetic(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right, Func<Term<T>, Term<T>, Term<T>> operation)
 		{
-			List<Term> leftTermsList = CloneHelper<Term>.CloneCollection(left.Terms).ToList();
+			List<Term<T>> leftTermsList = CloneHelper<Term<T>>.CloneCollection(left.Terms).ToList();
 
-			foreach (Term rightTerm in right.Terms)
+			foreach (Term<T> rightTerm in right.Terms)
 			{
-				var match = leftTermsList.Where(leftTerm => Term.AreIdentical(leftTerm, rightTerm));
+				var match = leftTermsList.Where(leftTerm => Term<T>.AreIdentical(leftTerm, rightTerm));
 				if (match.Any())
 				{
-					Term matchTerm = match.Single();
+					Term<T> matchTerm = match.Single();
 					leftTermsList.Remove(matchTerm);
 
-					Term result = operation.Invoke(matchTerm, rightTerm);
-					if (result.CoEfficient != 0)
+					Term<T> result = operation.Invoke(matchTerm, rightTerm);
+					if (!GenericArithmetic<T>.Equal(result.CoEfficient, GenericArithmetic<T>.Zero))
 					{
 						if (!leftTermsList.Any(lt => lt.Equals(result)))
 						{
@@ -349,9 +299,9 @@ namespace ExtendedArithmetic
 				}
 				else
 				{
-					if (operation == Term.Subtract)
+					if (operation == Term<T>.Subtract)
 					{
-						leftTermsList.Add(Term.Negate(rightTerm));
+						leftTermsList.Add(Term<T>.Negate(rightTerm));
 					}
 					else
 					{
@@ -359,27 +309,27 @@ namespace ExtendedArithmetic
 					}
 				}
 			}
-			return new MultivariatePolynomial(leftTermsList.ToArray());
+			return new MultivariatePolynomial<T>(leftTermsList.ToArray());
 		}
 
-		public static MultivariatePolynomial Multiply(MultivariatePolynomial left, MultivariatePolynomial right)
+		public static MultivariatePolynomial<T> Multiply(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			List<Term> resultTerms = new List<Term>();
+			List<Term<T>> resultTerms = new List<Term<T>>();
 
 			foreach (var leftTerm in left.Terms)
 			{
 				foreach (var rightTerm in right.Terms)
 				{
-					Term newTerm = Term.Multiply(leftTerm, rightTerm);
+					Term<T> newTerm = Term<T>.Multiply(leftTerm, rightTerm);
 
 					// Combine like terms
-					var likeTerms = resultTerms.Where(trm => Term.AreIdentical(newTerm, trm));
+					var likeTerms = resultTerms.Where(trm => Term<T>.AreIdentical(newTerm, trm));
 					if (likeTerms.Any())
 					{
 						resultTerms = resultTerms.Except(likeTerms).ToList();
 
-						Term likeTermsSum = likeTerms.Aggregate(Term.Add);
-						Term sum = Term.Add(newTerm, likeTermsSum);
+						Term<T> likeTermsSum = likeTerms.Aggregate(Term<T>.Add);
+						Term<T> sum = Term<T>.Add(newTerm, likeTermsSum);
 
 						newTerm = sum;
 					}
@@ -389,10 +339,10 @@ namespace ExtendedArithmetic
 				}
 			}
 
-			return new MultivariatePolynomial(resultTerms.ToArray());
+			return new MultivariatePolynomial<T>(resultTerms.ToArray());
 		}
 
-		public static MultivariatePolynomial Pow(MultivariatePolynomial poly, int exponent)
+		public static MultivariatePolynomial<T> Pow(MultivariatePolynomial<T> poly, int exponent)
 		{
 			if (exponent < 0)
 			{
@@ -400,39 +350,39 @@ namespace ExtendedArithmetic
 			}
 			else if (exponent == 0)
 			{
-				return new MultivariatePolynomial(new Term[] { new Term(1, new Indeterminate[0]) });
+				return new MultivariatePolynomial<T>(new Term<T>[] { new Term<T>(GenericArithmetic<T>.One, new Indeterminate[0]) });
 			}
 			else if (exponent == 1)
 			{
 				return poly.Clone();
 			}
 
-			MultivariatePolynomial result = poly.Clone();
+			MultivariatePolynomial<T> result = poly.Clone();
 
 			int counter = exponent - 1;
 			while (counter != 0)
 			{
-				result = MultivariatePolynomial.Multiply(result, poly);
+				result = MultivariatePolynomial<T>.Multiply(result, poly);
 				counter -= 1;
 			}
-			return new MultivariatePolynomial(result.Terms);
+			return new MultivariatePolynomial<T>(result.Terms);
 		}
 
-		public static MultivariatePolynomial Divide(MultivariatePolynomial left, MultivariatePolynomial right)
+		public static MultivariatePolynomial<T> Divide(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			List<Term> newTermsList = new List<Term>();
-			List<Term> leftTermsList = CloneHelper<Term>.CloneCollection(left.Terms).ToList();
+			List<Term<T>> newTermsList = new List<Term<T>>();
+			List<Term<T>> leftTermsList = CloneHelper<Term<T>>.CloneCollection(left.Terms).ToList();
 
-			foreach (Term rightTerm in right.Terms)
+			foreach (Term<T> rightTerm in right.Terms)
 			{
-				var matches = leftTermsList.Where(leftTerm => Term.ShareCommonFactor(leftTerm, rightTerm)).ToList();
+				var matches = leftTermsList.Where(leftTerm => Term<T>.ShareCommonFactor(leftTerm, rightTerm)).ToList();
 				if (matches.Any())
 				{
-					foreach (Term matchTerm in matches)
+					foreach (Term<T> matchTerm in matches)
 					{
 						leftTermsList.Remove(matchTerm);
-						Term quotient = Term.Divide(matchTerm, rightTerm);
-						if (quotient != Term.Empty)
+						Term<T> quotient = Term<T>.Divide(matchTerm, rightTerm);
+						if (quotient != Term<T>.Empty)
 						{
 							if (!newTermsList.Any(lt => lt.Equals(quotient)))
 							{
@@ -446,24 +396,25 @@ namespace ExtendedArithmetic
 					///newTermsList.Add(rightTerm);
 				}
 			}
-			MultivariatePolynomial result = new MultivariatePolynomial(newTermsList.ToArray());
+			MultivariatePolynomial<T> result = new MultivariatePolynomial<T>(newTermsList.ToArray());
 			return result;
 		}
 
 		#endregion
 
 		#region Overrides and Interface implementations
-		public MultivariatePolynomial Clone()
+
+		public MultivariatePolynomial<T> Clone()
 		{
-			return new MultivariatePolynomial(CloneHelper<Term>.CloneCollection(Terms).ToArray());
+			return new MultivariatePolynomial<T>(CloneHelper<Term<T>>.CloneCollection(Terms).ToArray());
 		}
 
-		public bool Equals(MultivariatePolynomial other)
+		public bool Equals(MultivariatePolynomial<T> other)
 		{
 			return this.Equals(this, other);
 		}
 
-		public bool Equals(MultivariatePolynomial x, MultivariatePolynomial y)
+		public bool Equals(MultivariatePolynomial<T> x, MultivariatePolynomial<T> y)
 		{
 			if (x == null) { return (y == null) ? true : false; }
 			if (!x.Terms.Any()) { return (!y.Terms.Any()) ? true : false; }
@@ -471,7 +422,7 @@ namespace ExtendedArithmetic
 			if (x.Degree != y.Degree) { return false; }
 
 			int index = 0;
-			foreach (Term term in x.Terms)
+			foreach (Term<T> term in x.Terms)
 			{
 				if (!term.Equals(y.Terms[index++])) { return false; }
 			}
@@ -480,10 +431,10 @@ namespace ExtendedArithmetic
 
 		public override bool Equals(object obj)
 		{
-			return this.Equals(obj as MultivariatePolynomial);
+			return this.Equals(obj as MultivariatePolynomial<T>);
 		}
 
-		public int GetHashCode(MultivariatePolynomial obj)
+		public int GetHashCode(MultivariatePolynomial<T> obj)
 		{
 			return obj.GetHashCode();
 		}
@@ -495,7 +446,7 @@ namespace ExtendedArithmetic
 			{
 				foreach (var term in Terms)
 				{
-					hashCode = Term.CombineHashCodes(hashCode, term.GetHashCode());
+					hashCode = Term<T>.CombineHashCodes(hashCode, term.GetHashCode());
 				}
 			}
 			return hashCode;

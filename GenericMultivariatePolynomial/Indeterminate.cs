@@ -11,7 +11,7 @@ namespace ExtendedArithmetic
 		public char Symbol { get; }
 		public int Exponent { get; }
 
-		private BigInteger? IndeterminateValue { get; set; }
+		//private BigInteger? IndeterminateValue { get; set; }
 
 		private UnicodeCategory[] AllowedSymbolCategories = new UnicodeCategory[]
 		{
@@ -32,7 +32,7 @@ namespace ExtendedArithmetic
 			}
 			Symbol = symbol;
 			Exponent = exponent;
-			IndeterminateValue = null;
+			//IndeterminateValue = null;
 		}
 
 		internal static Indeterminate Parse(string input)
