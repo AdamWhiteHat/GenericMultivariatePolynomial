@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net45;net46;net48;netcoreapp3.1;netstandard2.1;net5.0;net6.0</TargetFrameworks>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Title>ExtendedArithmetic.GenericMultivariatePolynomial</Title>
+		<Product>ExtendedArithmetic.GenericMultivariatePolynomial</Product>
+		<AssemblyName>ExtendedArithmetic.GenericMultivariatePolynomial</AssemblyName>
+		<AssemblyTitle>ExtendedArithmetic.GenericMultivariatePolynomial</AssemblyTitle>
+		<PackageId>ExtendedArithmetic.GenericMultivariatePolynomial</PackageId>
+		<Description>A symbolic, multivariate integer polynomial arithmetic library.</Description>
+		<Authors>Adam White</Authors>
+		<Company>Adam White</Company>
+		<Copyright>Made by Adam White</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>A symbolic, multivariate integer polynomial-arithmetic polynomial symbolic arithmetic arbitrary-precision numerics numbers biginteger legendre-symbol tonelli-shanks gcd modulus square-root csharp</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageProjectUrl>https://www.nuget.org/packages/ExtendedArithmetic.GenericMultivariatePolynomial/</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/AdamWhiteHat/GenericMultivariatePolynomial</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+
+		<Version>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</Version>
+		<AssemblyVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</AssemblyVersion>
+		<FileVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</FileVersion>
+		<NeutralLanguage>en</NeutralLanguage>
+	</PropertyGroup>
+
+	<ItemGroup>
+	    <None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
+</Project>
