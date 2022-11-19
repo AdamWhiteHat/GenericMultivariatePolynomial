@@ -539,6 +539,41 @@ namespace ExtendedArithmetic
 			}
 		}
 
+		public class ComplexComparer<T> : IComparer<T>
+		{
+			public int Compare(T l, T r)
+			{
+				Type parameterType = typeof(T);
+				var paramMethods = parameterType.GetMethods(BindingFlags.Static | BindingFlags.Public);
+				MethodInfo absMethod = paramMethods.Where(mi => mi.Name == "Abs").FirstOrDefault();
+
+				Type returnType = absMethod.ReturnType;
+				var returnMethods = returnType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
+				MethodInfo compareToMethod = returnMethods.Where(mi => (mi.Name == "CompareTo") && (mi.GetParameters().FirstOrDefault()?.ParameterType == typeof(double))).FirstOrDefault();
+
+				ParameterExpression leftParameter = Expression.Parameter(parameterType, "left");
+				ParameterExpression rightParameter = Expression.Parameter(parameterType, "right");
+
+				MethodCallExpression leftAbs = Expression.Call(absMethod, leftParameter);
+				MethodCallExpression rightAbs = Expression.Call(absMethod, rightParameter);
+
+				Func<T, double> leftAbsFunc = Expression.Lambda<Func<T, double>>(leftAbs, leftParameter).Compile();
+				Func<T, double> rightAbsFunc = Expression.Lambda<Func<T, double>>(rightAbs, rightParameter).Compile();
+
+				double leftAbsResult = leftAbsFunc.Invoke(l);
+				double rightAbsResult = rightAbsFunc.Invoke(r);
+
+				var leftAbsConstant = Expression.Constant(leftAbsResult);
+				ParameterExpression rightAbsParameter = Expression.Parameter(returnType, "rightAbs");
+
+				MethodCallExpression compareToExpression = Expression.Call(leftAbsConstant, compareToMethod, rightAbsParameter);
+				Func<double, int> compareToFunc = Expression.Lambda<Func<double, int>>(compareToExpression, rightAbsParameter).Compile();
+
+				int result = compareToFunc.Invoke(rightAbsResult);
+				return result;
+			}
+		}
+
 		private static class ConvertImplementation<TFrom, TTo>
 		{
 			private static Func<TFrom, TTo> _convertFunction = null;

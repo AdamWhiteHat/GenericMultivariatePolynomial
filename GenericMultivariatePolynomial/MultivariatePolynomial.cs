@@ -80,9 +80,24 @@ namespace ExtendedArithmetic
 		{
 			if (Terms.Length > 1)
 			{
+
 				var orderedTerms = Terms.OrderBy(t => t.Degree); // First by degree
 				orderedTerms = orderedTerms.ThenByDescending(t => t.VariableCount()); // Then by variable count
-				orderedTerms = orderedTerms.ThenBy(t => t.CoEfficient); // Then by coefficient value
+
+				Type tType = typeof(T);
+				Type iComparableType = tType.GetInterface("IComparable");
+				if (iComparableType != null)
+				{
+					orderedTerms = orderedTerms.ThenBy(t => t.CoEfficient); // Then by coefficient value
+				}
+				else
+				{
+					if (tType == typeof(Complex))
+					{
+						orderedTerms = orderedTerms.ThenBy(t => t.CoEfficient, new GenericArithmetic<T>.ComplexComparer<T>());
+					}
+				}
+
 				orderedTerms = orderedTerms.
 					ThenByDescending(t =>
 						new string(t.Variables.OrderBy(v => v.Symbol).Select(v => v.Symbol).ToArray())
