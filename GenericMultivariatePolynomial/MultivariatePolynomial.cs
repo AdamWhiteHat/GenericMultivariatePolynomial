@@ -469,7 +469,6 @@ namespace ExtendedArithmetic
 
 		public override string ToString()
 		{
-			bool isFirstPass = true;
 			string signString = string.Empty;
 			string termString = string.Empty;
 			string result = string.Empty;
