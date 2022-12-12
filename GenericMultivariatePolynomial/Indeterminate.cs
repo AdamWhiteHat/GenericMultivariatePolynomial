@@ -38,13 +38,24 @@ namespace ExtendedArithmetic
 
 			string[] parts = input.Split(new char[] { '^' });
 
-			if (parts[0].Length != 1) { throw new FormatException(); }
+			if (parts[0].Length != 1)
+			{
+				throw new FormatException();
+			}
+
 			char symbol = parts[0][0];
-			if (!char.IsLetter(symbol)) { throw new FormatException(); }
+
+			if (!char.IsLetter(symbol))
+			{
+				throw new FormatException();
+			}
 
 			if (parts.Length == 2)
 			{
-				if (!parts[1].All(c => char.IsDigit(c))) { throw new FormatException(); }
+				if (!parts[1].All(c => char.IsDigit(c)))
+				{
+					throw new FormatException();
+				}
 				exponent = int.Parse(parts[1]);
 			}
 

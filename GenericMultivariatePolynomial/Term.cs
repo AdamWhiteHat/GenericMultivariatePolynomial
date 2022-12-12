@@ -32,12 +32,19 @@ namespace ExtendedArithmetic
 			string[] parts = input.Split(new char[] { '*' });
 
 			T coefficient = GenericArithmetic<T>.One;
-			if (parts[0].All(c => c == '-' || char.IsDigit(c)))
+
+			bool parsed = false;
+			try
 			{
 				coefficient = GenericArithmetic<T>.Parse(parts[0]);
 				parts = parts.Skip(1).ToArray();
+				parsed = true;
 			}
-			else if (parts[0].StartsWith("-") && parts[0].Any(c => char.IsLetter(c)))
+			catch
+			{
+			}
+
+			if (!parsed && parts[0].StartsWith("-"))
 			{
 				coefficient = GenericArithmetic<T>.MinusOne;
 				parts[0] = parts[0].Replace("-", "");
@@ -54,9 +61,18 @@ namespace ExtendedArithmetic
 
 		internal static bool ShareCommonFactor(Term<T> left, Term<T> right)
 		{
-			if (left == null || right == null) { throw new ArgumentNullException(); }
-			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv)))) { return false; }
-			if (!GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One) && (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero))) { return false; }
+			if (left == null || right == null)
+			{
+				throw new ArgumentNullException(); 
+			}
+			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv)))) 
+			{
+				return false; 
+			}
+			if (!GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One) && (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero)))
+			{
+				return false; 
+			}
 			return true;
 		}
 
