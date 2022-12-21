@@ -199,41 +199,6 @@ namespace ExtendedArithmetic
 			return new string(outString.ToArray());
 		}
 
-		public static MultivariatePolynomial<T> GetDerivative(MultivariatePolynomial<T> poly, char symbol)
-		{
-			List<Term<T>> resultTerms = new List<Term<T>>();
-			foreach (Term<T> term in poly.Terms)
-			{
-				if (term.Variables.Any() && term.Variables.Any(indt => indt.Symbol == symbol))
-				{
-					T newTerm_Coefficient = GenericArithmetic<T>.Zero;
-					List<Indeterminate> newTerm_Variables = new List<Indeterminate>();
-
-					foreach (Indeterminate variable in term.Variables)
-					{
-						if (variable.Symbol == symbol)
-						{
-							newTerm_Coefficient = GenericArithmetic<T>.Multiply(term.CoEfficient, GenericArithmetic<T>.Convert<int>(variable.Exponent));
-
-							int newExponent = variable.Exponent - 1;
-							if (newExponent > 0)
-							{
-								newTerm_Variables.Add(new Indeterminate(symbol, newExponent));
-							}
-						}
-						else
-						{
-							newTerm_Variables.Add(variable.Clone());
-						}
-					}
-
-					resultTerms.Add(new Term<T>(newTerm_Coefficient, newTerm_Variables.ToArray()));
-				}
-			}
-
-			return new MultivariatePolynomial<T>(resultTerms.ToArray());
-		}
-
 		private void OrderMonomials()
 		{
 			if (Terms.Length > 1)
@@ -581,6 +546,89 @@ namespace ExtendedArithmetic
 			}
 			MultivariatePolynomial<T> result = new MultivariatePolynomial<T>(newTermsList.ToArray());
 			return result;
+		}
+
+		#endregion
+
+		#region Change Forms
+
+		public static MultivariatePolynomial<T> GetDerivative(MultivariatePolynomial<T> poly, char symbol)
+		{
+			List<Term<T>> resultTerms = new List<Term<T>>();
+			foreach (Term<T> term in poly.Terms)
+			{
+				if (term.Variables.Any() && term.Variables.Any(indt => indt.Symbol == symbol))
+				{
+					T newTerm_Coefficient = GenericArithmetic<T>.Zero;
+					List<Indeterminate> newTerm_Variables = new List<Indeterminate>();
+
+					foreach (Indeterminate variable in term.Variables)
+					{
+						if (variable.Symbol == symbol)
+						{
+							newTerm_Coefficient = GenericArithmetic<T>.Multiply(term.CoEfficient, GenericArithmetic<T>.Convert<int>(variable.Exponent));
+
+							int newExponent = variable.Exponent - 1;
+							if (newExponent > 0)
+							{
+								newTerm_Variables.Add(new Indeterminate(symbol, newExponent));
+							}
+						}
+						else
+						{
+							newTerm_Variables.Add(variable.Clone());
+						}
+					}
+
+					resultTerms.Add(new Term<T>(newTerm_Coefficient, newTerm_Variables.ToArray()));
+				}
+			}
+
+			return new MultivariatePolynomial<T>(resultTerms.ToArray());
+		}
+
+
+		/// <summary>
+		/// Finds the indefinite integral of the polynomial.
+		/// </summary>
+		/// <param name="c">The constant.</param>
+		/// <returns>The indefinite integral.</returns>
+		public static MultivariatePolynomial<T> IndefiniteIntegral(MultivariatePolynomial<T> poly, char symbol, T c)
+		{
+			List<Term<T>> newTerms = new List<Term<T>>();
+
+			foreach (Term<T> term in poly.Terms.ToList())
+			{
+				int divisor = 1;
+				bool symbolAdded = false;
+				List<Indeterminate> newVariables = new List<Indeterminate>();
+				foreach (Indeterminate indeterminate in term.Variables)
+				{
+					char newSymbol = indeterminate.Symbol;
+					int newExponent = indeterminate.Exponent;
+					if (indeterminate.Symbol == symbol)
+					{
+						divisor = newExponent + 1;
+						newExponent = divisor;
+						symbolAdded = true;
+					}
+					newVariables.Add(new Indeterminate(newSymbol, newExponent));
+				}
+				if (!symbolAdded)
+				{
+					newVariables.Add(new Indeterminate(symbol, 1));
+				}
+
+				T newCoefficient = term.CoEfficient;
+				if (divisor > 1)
+				{
+					newCoefficient = GenericArithmetic<T>.Divide(newCoefficient, GenericArithmetic<T>.Convert(divisor));
+				}
+
+				newTerms.Add(new Term<T>(newCoefficient, newVariables.ToArray()));
+			}
+
+			return new MultivariatePolynomial<T>(newTerms.ToArray());
 		}
 
 		#endregion
