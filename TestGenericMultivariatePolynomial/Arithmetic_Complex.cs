@@ -53,14 +53,14 @@ namespace TestGenericPolynomial
 		}
 
 		[Test]
-		[TestCase("3*X^2*Y^3 + 2*X^3*Y^2 + 6*X*Y^2 + 4*X^3 - 6*X^2*Y + 3*X*Y - 2*X^2 + 12*X - 6", "X^3*Y^2 + 3*X^2 - 3*Y^2 - 12*X - 2", "(3, 0)*X^2*Y^3 + X^3*Y^2 + (4, 0)*X^3 + (-6, 0)*X^2*Y + (6, 0)*X*Y^2 + (-5, 0)*X^2 + (3, -0)*Y^2 + (3, 0)*X*Y + (24, 0)*X + (-4, 0)")]
+		[TestCase("3*X^2*Y^3 + 2*X^3*Y^2 + 6*X*Y^2 + 4*X^3 - 6*X^2*Y + 3*X*Y - 2*X^2 + 12*X - 6", "X^3*Y^2 + 3*X^2 - 3*Y^2 - 12*X - 2", "(3, 0)*X^2*Y^3 + X^3*Y^2 + (4, 0)*X^3 + (6, 0)*X*Y^2 + (-6, 0)*X^2*Y + (3, -0)*Y^2 + (-5, 0)*X^2 + (3, 0)*X*Y + (24, 0)*X + (-4, 0)")]
 		public override void TestSubtract4(string minuend, string subtrahend, string expected)
 		{
 			base.TestSubtract4(minuend, subtrahend, expected);
 		}
 
 		[Test]
-		[TestCase("504*X*Y*Z^2 + 216*X*Y - 42*X*Z^2 - 18*X + 84*Y*Z^2 + 36*Y - 7*Z^2 - 3", "X*Y*Z^2 + 42*X*Z^2 - 8*X - X^2 - 3", "(503, 0)*X*Y*Z^2 + (-84, 0)*X*Z^2 + (84, 0)*Y*Z^2 + (-7, 0)*Z^2 + X^2 + (216, 0)*X*Y + (36, 0)*Y + (-10, 0)*X")]
+		[TestCase("504*X*Y*Z^2 + 216*X*Y - 42*X*Z^2 - 18*X + 84*Y*Z^2 + 36*Y - 7*Z^2 - 3", "X*Y*Z^2 + 42*X*Z^2 - 8*X - X^2 - 3", "(503, 0)*X*Y*Z^2 + (84, 0)*Y*Z^2 + (-84, 0)*X*Z^2 + X^2 + (-7, 0)*Z^2 + (216, 0)*X*Y + (36, 0)*Y + (-10, 0)*X")]
 		public override void TestSubtract5(string minuend, string subtrahend, string expected)
 		{
 			base.TestSubtract5(minuend, subtrahend, expected);
@@ -137,10 +137,30 @@ namespace TestGenericPolynomial
 		}
 
 		[Test]
-		[TestCase("-X^2 + 5", "2*X + 3", "X + 3", "-4*X^2 - 36*X - 76")]
+		[TestCase("-1*X^2 + 5", "2*X + 3", "X + 3", "(-4, 0)*X^2 + (-36, 0)*X + (-76, 0)")]
 		public override void TestFunctionalComposition_fg_x_001(string f, string g, string x, string expecting)
 		{
 			base.TestFunctionalComposition_fg_x_001(f, g, x, expecting);
+		}
+
+		[Test]
+		public void TestRewriteComplexPolynomial()
+		{
+			string input = "-(3, 0)*X - Y - (1, 0)";
+			string expected = "(-3,0)*X+(-1,0)*Y+(-1,0)";
+
+			string actual = MultivariatePolynomial<Complex>.RewriteComplexPolynomial(input);
+
+			TestContext.WriteLine($"Expected: {expected}");
+			TestContext.WriteLine($"  Actual: {actual}");
+
+			var polynomial = MultivariatePolynomial<Complex>.Parse(actual);
+			string polynomialString = polynomial.ToString();
+
+			TestContext.WriteLine();
+			TestContext.WriteLine($"Polynomial.ToString(): {polynomialString}");
+
+			Assert.AreEqual(expected, actual);
 		}
 	}
 }

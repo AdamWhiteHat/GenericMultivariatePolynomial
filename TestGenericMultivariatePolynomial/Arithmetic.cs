@@ -241,6 +241,8 @@ namespace TestMultivariatePolynomial
 			MultivariatePolynomial<T> composition = polyF.FunctionalComposition(indeterminantsConstants);
 			string actual = composition.ToString();
 
+			TestContext.WriteLine($"f(X) = {f}");
+			TestContext.WriteLine($"f({x}) = {actual}");
 			Assert.AreEqual(expecting, actual);
 		}
 
@@ -259,6 +261,8 @@ namespace TestMultivariatePolynomial
 			MultivariatePolynomial<T> composition = polyF.FunctionalComposition(indeterminantsConstants);
 			string actual = composition.ToString();
 
+			TestContext.WriteLine($"f(X) = {f}");
+			TestContext.WriteLine($"f({x}) = {actual}");
 			Assert.AreEqual(expecting, actual);
 		}
 
@@ -279,6 +283,9 @@ namespace TestMultivariatePolynomial
 			MultivariatePolynomial<T> composition = polyF.FunctionalComposition(indeterminantsConstants);
 			string actual = composition.ToString();
 
+
+			TestContext.WriteLine($"f(X, Y) = {f}");
+			TestContext.WriteLine($"f({x}, {y}) = {actual}");
 			Assert.AreEqual(expecting, actual);
 		}
 
@@ -304,6 +311,11 @@ namespace TestMultivariatePolynomial
 			MultivariatePolynomial<T> gComposition = fComposition.FunctionalComposition(gIndeterminants);
 			string actual = gComposition.ToString();
 
+
+			TestContext.WriteLine($"f(X) = {f}");
+			TestContext.WriteLine($"g(X) = {g}");
+			TestContext.WriteLine($"f(g(X)) = {fComposition}");
+			TestContext.WriteLine($"f(g({x})) = {actual}");
 			Assert.AreEqual(expecting, actual);
 		}
 

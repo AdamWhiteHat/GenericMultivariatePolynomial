@@ -12,9 +12,13 @@ namespace ExtendedArithmetic
 {
 	public static class GenericArithmetic<T>
 	{
+		/// <summary>Gets a value that represents the number negative one (-1).</summary>
 		public static T MinusOne;
+		/// <summary>Gets a value that represents the number zero (0).</summary>
 		public static T Zero;
+		/// <summary>Gets a value that represents the number one (1).</summary>
 		public static T One;
+		/// <summary>Gets a value that represents the number two (2).</summary>
 		public static T Two;
 
 		private static Dictionary<ExpressionType, Func<T, T, T>> _operationFunctionDictionary;
@@ -56,32 +60,68 @@ namespace ExtendedArithmetic
 			return ConvertImplementation<TFrom, T>.Convert(value);
 		}
 
-		public static T Add(T a, T b)
+		/// <summary>
+		/// Adds two values and returns the result.
+		/// </summary>
+		/// <param name="augend">The first value to add.</param>
+		/// <param name="addend">The second value to add.</param>
+		/// <returns>The sum of the augend and addend.</returns>
+		public static T Add(T augend, T addend)
 		{
-			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Add).Invoke(a, b);
+			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Add).Invoke(augend, addend);
 		}
 
-		public static T Subtract(T a, T b)
+		/// <summary>
+		/// Subtracts one value from another and returns the result.
+		/// </summary>
+		/// <param name="minuend">The value to subtract from.</param>
+		/// <param name="subtrahend">The value to subtract.</param>
+		/// <returns>The difference of the minuend and the subtrahend.</returns>
+		public static T Subtract(T minuend, T subtrahend)
 		{
-			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Subtract).Invoke(a, b);
+			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Subtract).Invoke(minuend, subtrahend);
 		}
 
-		public static T Multiply(T a, T b)
+		/// <summary>
+		/// Returns the product of two values.
+		/// </summary>
+		/// <param name="multiplicand">The first number to multiply.</param>
+		/// <param name="multiplier">The second number to multiply.</param>
+		/// <returns>The product of the multiplicand and the multiplier.</returns>
+		public static T Multiply(T multiplicand, T multiplier)
 		{
-			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Multiply).Invoke(a, b);
+			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Multiply).Invoke(multiplicand, multiplier);
 		}
 
-		public static T Divide(T a, T b)
+		/// <summary>
+		/// Returns the quotient of two values.
+		/// </summary>
+		/// <param name="dividend">The number that is being divided.</param>
+		/// <param name="divisor">The number by which to divide.</param>
+		/// <returns>The quotient of the dividend divided by the divisor.</returns>
+		public static T Divide(T dividend, T divisor)
 		{
-			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Divide).Invoke(a, b);
+			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Divide).Invoke(dividend, divisor);
 		}
 
-		public static T Modulo(T a, T b)
+		/// <summary>
+		/// Returns the remainder of a dividend divided by a modulus.
+		/// </summary>
+		/// <param name="dividend">The number that is being divided.</param>
+		/// <param name="modulus">The number by which to divide.</param>
+		/// <returns>The remainder of the dividend divided by the modulus.</returns>
+		public static T Modulo(T dividend, T modulus)
 		{
-			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Modulo).Invoke(a, b);
+			return GenericArithmeticFactory<T>.CreateGenericBinaryFunction(ExpressionType.Modulo).Invoke(dividend, modulus);
 		}
 
-		public static T Power(T a, int b)
+		/// <summary>
+		/// Raises a base number to an exponent and returns the result.
+		/// </summary>
+		/// <param name="base">The number to raise to the exponent power.</param>
+		/// <param name="exponent">The exponent to raise the base by.</param>
+		/// <returns>The result of raising the base to the exponent.</returns>
+		public static T Power(T @base, int exponent)
 		{
 			if (_powerIntFunction == null)
 			{
@@ -90,91 +130,97 @@ namespace ExtendedArithmetic
 
 			if (_powerIntFunction != null)
 			{
-				return _powerIntFunction.Invoke(a, b);
+				return _powerIntFunction.Invoke(@base, exponent);
 			}
 			else
 			{
-				return Power(a, ConvertImplementation<int, T>.Convert(b));
+				return Power(@base, ConvertImplementation<int, T>.Convert(exponent));
 			}
 		}
 
-		public static T Power(T a, T b)
+		/// <summary>
+		/// Raises a base number to an exponent and returns the result.
+		/// </summary>
+		/// <param name="base">The number to raise to the exponent power.</param>
+		/// <param name="exponent">The exponent to raise the base by.</param>
+		/// <returns>The result of raising the base to the exponent.</returns>
+		public static T Power(T @base, T exponent)
 		{
 			if (_powerTFunction == null)
 			{
 				_powerTFunction = GenericArithmeticFactory<T>.CreatePowerFunction();
 			}
-			return _powerTFunction.Invoke(a, b);
+			return _powerTFunction.Invoke(@base, exponent);
 		}
 
-		public static T Negate(T a)
+		public static T Negate(T value)
 		{
-			return Multiply(a, MinusOne);
+			return Multiply(value, MinusOne);
 		}
 
-		public static T Increment(T a)
+		public static T Increment(T value)
 		{
-			return Add(a, One);
+			return Add(value, One);
 		}
 
-		public static T Decrement(T a)
+		public static T Decrement(T value)
 		{
-			return Subtract(a, One);
+			return Subtract(value, One);
 		}
 
-		public static bool GreaterThan(T a, T b)
+		public static bool GreaterThan(T left, T right)
 		{
-			if (IsComplexValueType(typeof(T)))
+			if (ComplexHelperMethods.IsComplexValueType(typeof(T)))
 			{
-				return ComplexEqualityOperator(a, b, ExpressionType.GreaterThan);
+				return ComplexHelperMethods.ComplexEqualityOperator(left, right, ExpressionType.GreaterThan);
 			}
 			if (_greaterthanFunction == null)
 			{
 				_greaterthanFunction = GenericArithmeticFactory<T>.CreateGenericEqualityOperator(ExpressionType.GreaterThan);
 			}
-			return _greaterthanFunction.Invoke(a, b);
+			return _greaterthanFunction.Invoke(left, right);
 		}
 
-		public static bool LessThan(T a, T b)
+		public static bool LessThan(T left, T right)
 		{
-			if (IsComplexValueType(typeof(T)))
+			if (ComplexHelperMethods.IsComplexValueType(typeof(T)))
 			{
-				return ComplexEqualityOperator(a, b, ExpressionType.LessThan);
+				return ComplexHelperMethods.ComplexEqualityOperator(left, right, ExpressionType.LessThan);
 			}
 			if (_lessthanFunction == null)
 			{
 				_lessthanFunction = GenericArithmeticFactory<T>.CreateGenericEqualityOperator(ExpressionType.LessThan);
 			}
-			return _lessthanFunction.Invoke(a, b);
+			return _lessthanFunction.Invoke(left, right);
 		}
 
-		public static bool GreaterThanOrEqual(T a, T b)
+		public static bool GreaterThanOrEqual(T left, T right)
 		{
-			return (GreaterThan(a, b) || Equal(a, b));
+			return (GreaterThan(left, right) || Equal(left, right));
 		}
 
-		public static bool LessThanOrEqual(T a, T b)
+		public static bool LessThanOrEqual(T left, T right)
 		{
-			return (LessThan(a, b) || Equal(a, b));
+			return (LessThan(left, right) || Equal(left, right));
 		}
 
-		public static bool Equal(T a, T b)
+		public static bool Equal(T left, T right)
 		{
 			if (_equalFunction == null)
 			{
 				_equalFunction = GenericArithmeticFactory<T>.CreateGenericEqualityOperator(ExpressionType.Equal);
 			}
 
-			if (a == null)
+			if (left == null)
 			{
-				return (b == null);
+				return (right == null);
 			}
-			return _equalFunction.Invoke(a, b);
+			return _equalFunction.Invoke(left, right);
 		}
 
-		public static bool NotEqual(T a, T b)
+		public static bool NotEqual(T left, T right)
 		{
-			return !Equal(a, b);
+			return !Equal(left, right);
 		}
 
 		public static T SquareRoot(T input)
@@ -374,12 +420,6 @@ namespace ExtendedArithmetic
 			return (GenericArithmeticCommon.IsArithmeticValueType(value.GetType()) && !IsWholeNumber(value));
 		}
 
-
-		public static bool IsComplexValueType(Type type)
-		{
-			return type.Name.Contains("Complex");
-		}
-
 		internal static T SquareRootInternal(T input)
 		{
 			if (Equal(input, Zero)) { return Zero; }
@@ -407,173 +447,6 @@ namespace ExtendedArithmetic
 			return Modulo(power, modulus);
 		}
 
-		private static bool ComplexEqualityOperator(T left, T right, ExpressionType operationType)
-		{
-			if (!IsComplexValueType(typeof(T)))
-			{
-				throw new Exception("T must be a Complex type.");
-			}
-
-			if (typeof(T) == typeof(Complex))
-			{
-				Complex? l = left as Complex?;
-				Complex? r = right as Complex?;
-				if (!l.HasValue || !r.HasValue)
-				{
-					throw new Exception("Could not cast parameters to type: Complex.");
-				}
-
-				double lft = Complex.Abs(l.Value);
-				double rght = Complex.Abs(r.Value);
-
-				if (Math.Sign(l.Value.Real) == -1)
-				{
-					lft = -lft;
-				}
-				if (Math.Sign(r.Value.Real) == -1)
-				{
-					rght = -rght;
-				}
-
-				if (operationType == ExpressionType.GreaterThan) { return (lft > rght); }
-				else if (operationType == ExpressionType.LessThan) { return (lft < rght); }
-				else
-				{
-					throw new NotSupportedException($"Not a comparison expression type: {Enum.GetName(typeof(ExpressionType), operationType)}.");
-				}
-			}
-
-			PropertyInfo realProperty = typeof(T).GetProperty("Real", BindingFlags.Public | BindingFlags.Instance);
-			Type realType = realProperty.PropertyType;
-
-			object leftReal = realProperty.GetValue(left);
-			object rightReal = realProperty.GetValue(right);
-
-			int leftRealSign;
-			int rightRealSign;
-
-			MethodInfo signMethod = null;
-			if (GenericArithmeticCommon.IsArithmeticValueType(realType))
-			{
-				signMethod = typeof(Math).GetMethod("Sign", BindingFlags.Static | BindingFlags.Public);
-
-				leftRealSign = (int)signMethod.Invoke(null, new object[] { leftReal });
-				rightRealSign = (int)signMethod.Invoke(null, new object[] { rightReal });
-			}
-			else
-			{
-				var signProperty = realType.GetProperty("Sign", BindingFlags.Public | BindingFlags.Instance);
-
-				leftRealSign = (int)signProperty.GetValue(leftReal);
-				rightRealSign = (int)signProperty.GetValue(rightReal);
-			}
-
-			Delegate absFunction = GenericArithmeticFactory<T>.CreateAbsFunction_UnlikeReturnType();
-
-			object abs_left = absFunction.DynamicInvoke(left);
-			object abs_right = absFunction.DynamicInvoke(right);
-
-			Type absResultType = absFunction.Method.ReturnType;
-
-			MethodInfo negateMethod = null;
-			if (GenericArithmeticCommon.IsArithmeticValueType(absResultType))
-			{
-				ParameterExpression absValueParam = Expression.Parameter(absResultType, "value");
-
-				Delegate negateDelegate = Expression.Lambda(Expression.Negate(Expression.Variable(absResultType)), absValueParam).Compile();
-				negateMethod = negateDelegate.GetMethodInfo();
-
-				if (leftRealSign == -1)
-				{
-					abs_left = negateMethod.Invoke(abs_left, null);
-				}
-				if (rightRealSign == -1)
-				{
-					abs_right = negateMethod.Invoke(abs_right, null);
-				}
-			}
-			else
-			{
-				negateMethod = absResultType.GetMethod("Negate", BindingFlags.Public | BindingFlags.Static);
-
-				if (leftRealSign == -1)
-				{
-					abs_left = negateMethod.Invoke(null, new object[] { abs_left });
-				}
-				if (rightRealSign == -1)
-				{
-					abs_right = negateMethod.Invoke(null, new object[] { abs_right });
-				}
-			}
-
-			MethodInfo compareMethod = absResultType.GetMethod("Compare", BindingFlags.Static | BindingFlags.Public);
-
-			Type compareReturnType = compareMethod.ReturnType;
-
-			ParameterExpression leftParameter = Expression.Parameter(typeof(object), "left");
-			ParameterExpression rightParameter = Expression.Parameter(typeof(object), "right");
-
-			// Expression.TypeAs
-			Expression lp = ConvertIfNeeded(leftParameter, absResultType);
-			Expression rp = ConvertIfNeeded(rightParameter, absResultType);
-
-			Expression methodCallExpression = Expression.Call(compareMethod, lp, rp);
-			Expression methodCall_AutoConversion = ConvertIfNeeded(methodCallExpression, compareMethod.ReturnType);
-
-			var compareLambda = Expression.Lambda(methodCall_AutoConversion, leftParameter, rightParameter).Compile();
-
-			object invokeResult = compareLambda.DynamicInvoke(abs_left, abs_right);
-
-			int compareResult = (int)invokeResult;
-			if (operationType == ExpressionType.GreaterThan)
-			{
-				return compareResult > 0;
-			}
-			else if (operationType == ExpressionType.LessThan)
-			{
-				return compareResult < 0;
-			}
-			else
-			{
-				throw new NotSupportedException($"Not a comparison expression type: {Enum.GetName(typeof(ExpressionType), operationType)}.");
-			}
-		}
-
-		public class ComplexComparer<T> : IComparer<T>
-		{
-			public int Compare(T l, T r)
-			{
-				Type parameterType = typeof(T);
-				var paramMethods = parameterType.GetMethods(BindingFlags.Static | BindingFlags.Public);
-				MethodInfo absMethod = paramMethods.Where(mi => mi.Name == "Abs").FirstOrDefault();
-
-				Type returnType = absMethod.ReturnType;
-				var returnMethods = returnType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
-				MethodInfo compareToMethod = returnMethods.Where(mi => (mi.Name == "CompareTo") && (mi.GetParameters().FirstOrDefault()?.ParameterType == typeof(double))).FirstOrDefault();
-
-				ParameterExpression leftParameter = Expression.Parameter(parameterType, "left");
-				ParameterExpression rightParameter = Expression.Parameter(parameterType, "right");
-
-				MethodCallExpression leftAbs = Expression.Call(absMethod, leftParameter);
-				MethodCallExpression rightAbs = Expression.Call(absMethod, rightParameter);
-
-				Func<T, double> leftAbsFunc = Expression.Lambda<Func<T, double>>(leftAbs, leftParameter).Compile();
-				Func<T, double> rightAbsFunc = Expression.Lambda<Func<T, double>>(rightAbs, rightParameter).Compile();
-
-				double leftAbsResult = leftAbsFunc.Invoke(l);
-				double rightAbsResult = rightAbsFunc.Invoke(r);
-
-				var leftAbsConstant = Expression.Constant(leftAbsResult);
-				ParameterExpression rightAbsParameter = Expression.Parameter(returnType, "rightAbs");
-
-				MethodCallExpression compareToExpression = Expression.Call(leftAbsConstant, compareToMethod, rightAbsParameter);
-				Func<double, int> compareToFunc = Expression.Lambda<Func<double, int>>(compareToExpression, rightAbsParameter).Compile();
-
-				int result = compareToFunc.Invoke(rightAbsResult);
-				return result;
-			}
-		}
-
 		private static class ConvertImplementation<TFrom, TTo>
 		{
 			private static Func<TFrom, TTo> _convertFunction = null;
@@ -594,25 +467,6 @@ namespace ExtendedArithmetic
 				Func<TFrom, TTo> result = Expression.Lambda<Func<TFrom, TTo>>(convert, value).Compile();
 				return result;
 			}
-		}
-
-		private static Expression ConvertIfNeeded(Expression valueExpression, Type targetType)
-		{
-			Type expressionType = null;
-			if (valueExpression.NodeType == ExpressionType.Parameter)
-			{
-				expressionType = ((ParameterExpression)valueExpression).Type;
-			}
-			else if (valueExpression.NodeType == ExpressionType.Call)
-			{
-				expressionType = ((MethodCallExpression)valueExpression).Method.ReturnType;
-			}
-
-			if (expressionType != targetType)
-			{
-				return Expression.Convert(valueExpression, targetType);
-			}
-			return valueExpression;
 		}
 	}
 }

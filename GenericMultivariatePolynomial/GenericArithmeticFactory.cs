@@ -409,7 +409,7 @@ namespace ExtendedArithmetic.Internal
 			MethodInfo method = null;
 			if (typeFromHandle == typeof(Complex))
 			{
-				method = typeof(HelperMethods).GetMethod("Parse", BindingFlags.Static | BindingFlags.Public);
+				method = typeof(ComplexHelperMethods).GetMethod("Parse", BindingFlags.Static | BindingFlags.Public);
 			}
 			else
 			{

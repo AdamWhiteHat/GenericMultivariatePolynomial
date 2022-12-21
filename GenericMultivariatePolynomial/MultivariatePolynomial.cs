@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Linq;
-using System.Numerics;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("TestGenericMultivariatePolynomial")]
 
 namespace ExtendedArithmetic
 {
@@ -30,8 +32,18 @@ namespace ExtendedArithmetic
 			string input = polynomialString;
 			if (string.IsNullOrWhiteSpace(input)) { throw new ArgumentException(); }
 
-			string inputString = input.Replace(" ", "").Replace("-", "+-");
-			if (inputString.StartsWith("+-")) { inputString = new string(inputString.Skip(1).ToArray()); }
+			string inputString = input.Replace(" ", "");
+
+			if (ComplexHelperMethods.IsComplexValueType(typeof(T)))
+			{
+				inputString = RewriteComplexPolynomial(inputString);
+			}
+			else
+			{
+				inputString = inputString.Replace("-", "+-");
+				if (inputString.StartsWith("+-")) { inputString = new string(inputString.Skip(1).ToArray()); }
+			}
+
 			string[] stringTerms = inputString.Split(new char[] { '+' });
 
 			if (!stringTerms.Any()) { throw new FormatException(); }
@@ -39,6 +51,152 @@ namespace ExtendedArithmetic
 			Term<T>[] terms = stringTerms.Select(str => Term<T>.Parse(str)).ToArray();
 
 			return new MultivariatePolynomial<T>(terms);
+		}
+
+		internal static string RewriteComplexPolynomial(string complexPolynomialString)
+		{
+			// Normally minus signs between terms is handled by replacing "-" with "+-" and splitting by "+" into terms.
+			// However, complex numbers have the form (1, 0) and they break this assumption because
+			// subtracting a complex term can be expressed like "X - (6, 0)*Y" or "X + (-6, 0)*Y" or even "X - 6*Y",
+			// so we normalize complex polynomials here going character by character and using boolean flags to track state.
+
+			// I wouldn't waste too much brain power trying to comprehend this code.
+			// Just know that it replaces minus signs between terms with plus signs and makes the complex coefficient negative instead
+			// and makes explicit coefficients with a value of 1.
+			// E.g., converts this:
+			// -3*X - Y - 1
+			// Into this:
+			// (-3, 0)*X + (-1, 0)*Y + (-1, 0)
+
+			string inputString = complexPolynomialString.Replace(" ", "");
+
+			bool inNumber = false;
+			bool hasParentheses = false;
+			bool inTerm = false;
+			bool isNegated = false;
+			int index = -1;
+			List<char> outString = new List<char>();
+			while (++index < inputString.Length)
+			{
+				char c = inputString[index];
+
+				if (inNumber)
+				{
+					if (hasParentheses)
+					{
+						if (c == ')')
+						{
+							inNumber = false;
+							hasParentheses = false;
+						}
+						else if (char.IsDigit(c) || "-,.".Contains(c))
+						{
+							// Do nothing
+						}
+					}
+
+					else
+					{
+						if (c == '*')
+						{
+							inNumber = false;
+						}
+						else if (char.IsLetter(c))
+						{
+							inNumber = false;
+							outString.Add('(');
+							if (isNegated)
+							{
+								isNegated = false;
+								outString.Add('-');
+							}
+							outString.Add('1');
+							outString.Add(',');
+							outString.Add('0');
+							outString.Add(')');
+							outString.Add('*');
+						}
+						else if ("+-".Contains(c))
+						{
+							inNumber = false;
+							inTerm = false;
+							if (c == '-')
+							{
+								isNegated = true;
+								c = '+';
+							}
+						}
+					}
+				}
+				else if (inTerm)
+				{
+					if (char.IsLetter(c) || "*^".Contains(c) || char.IsDigit(c))
+					{
+						// Do nothing
+					}
+					else if (c == '+')
+					{
+						inTerm = false;
+					}
+					else if (c == '-')
+					{
+						inTerm = false;
+						isNegated = true;
+						c = '+';
+					}
+				}
+				else
+				{
+					if (c == '(' || char.IsDigit(c))
+					{
+						inNumber = true;
+						inTerm = true;
+						if (c == '(')
+						{
+							hasParentheses = true;
+							if (isNegated)
+							{
+								outString.Add('(');
+								c = '-';
+								isNegated = false;
+							}
+						}
+						else
+						{
+							if (isNegated)
+							{
+								outString.Add('-');
+								isNegated = false;
+							}
+						}
+					}
+					else if (char.IsLetter(c))
+					{
+						inTerm = true;
+						outString.Add('(');
+						if (isNegated)
+						{
+							isNegated = false;
+							outString.Add('-');
+						}
+						outString.Add('1');
+						outString.Add(',');
+						outString.Add('0');
+						outString.Add(')');
+						outString.Add('*');
+					}
+					else if (c == '-')
+					{
+						if (index != 0) { throw new FormatException(); }
+						isNegated = true;
+						continue;
+					}
+				}
+
+				outString.Add(c);
+			}
+
+			return new string(outString.ToArray());
 		}
 
 		public static MultivariatePolynomial<T> GetDerivative(MultivariatePolynomial<T> poly, char symbol)
@@ -80,30 +238,40 @@ namespace ExtendedArithmetic
 		{
 			if (Terms.Length > 1)
 			{
+				var a_noOrdering = Terms.ToList();
+				var orderedEnumerable = Terms.OrderBy(t => t.Degree); // First by degree
+				var b_byDegree = orderedEnumerable.ToList();
+				List<int> degrees = orderedEnumerable.Select(t => t.Degree).ToList();
 
-				var orderedTerms = Terms.OrderBy(t => t.Degree); // First by degree
-				orderedTerms = orderedTerms.ThenByDescending(t => t.VariableCount()); // Then by variable count
+				orderedEnumerable = orderedEnumerable.ThenByDescending(t => t.VariableCount()); // Then by variable count
+				var c_byVariableCount = orderedEnumerable.ToList();
+				List<int> variableCounts = orderedEnumerable.Select(t => t.VariableCount()).ToList();
 
+				List<Term<T>> d_byCoefficient;
 				Type tType = typeof(T);
 				Type iComparableType = tType.GetInterface("IComparable");
 				if (iComparableType != null)
 				{
-					orderedTerms = orderedTerms.ThenBy(t => t.CoEfficient); // Then by coefficient value
+					orderedEnumerable = orderedEnumerable.ThenBy(t => t.CoEfficient); // Then by coefficient value					
+					d_byCoefficient = orderedEnumerable.ToList();
 				}
 				else
 				{
-					if (tType == typeof(Complex))
+					if (ComplexHelperMethods.IsComplexValueType(tType))
 					{
-						orderedTerms = orderedTerms.ThenBy(t => t.CoEfficient, new GenericArithmetic<T>.ComplexComparer<T>());
+						orderedEnumerable = orderedEnumerable.ThenBy(t => t.CoEfficient, new ComplexComparer<T>());
+						d_byCoefficient = orderedEnumerable.ToList();
 					}
 				}
 
-				orderedTerms = orderedTerms.
-					ThenByDescending(t =>
+				orderedEnumerable = orderedEnumerable
+					.ThenByDescending(t =>
 						new string(t.Variables.OrderBy(v => v.Symbol).Select(v => v.Symbol).ToArray())
 					); // Lastly, lexicographic order of variables. Descending order because zero degree terms (smaller stuff) goes first.
 
-				Terms = orderedTerms.ToArray();
+				var e_bySymbols = orderedEnumerable.ToList();
+
+				Terms = orderedEnumerable.ToArray();
 			}
 		}
 

@@ -31,8 +31,21 @@ namespace ExtendedArithmetic
 
 			string[] parts = input.Split(new char[] { '*' });
 
-			T coefficient = GenericArithmetic<T>.One;
+			if (ComplexHelperMethods.IsComplexValueType(typeof(T)))
+			{
+				parts[0] = parts[0].Replace("<", "(");
+				parts[0] = parts[0].Replace(">", ")");
 
+				if (parts[0].Contains('(') && parts[0].Contains(')'))
+				{
+					if (parts[0].StartsWith("-"))
+					{
+						parts[0] = parts[0].Replace("-(", "(-");
+					}
+				}
+			}
+
+			T coefficient = GenericArithmetic<T>.One;
 			bool parsed = false;
 			try
 			{
@@ -63,15 +76,15 @@ namespace ExtendedArithmetic
 		{
 			if (left == null || right == null)
 			{
-				throw new ArgumentNullException(); 
+				throw new ArgumentNullException();
 			}
-			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv)))) 
+			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv))))
 			{
-				return false; 
+				return false;
 			}
 			if (!GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One) && (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero)))
 			{
-				return false; 
+				return false;
 			}
 			return true;
 		}
