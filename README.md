@@ -8,7 +8,7 @@ All arithmetic is done __symbolically__. That means the result of an arithmetic 
 
 An example of a multivariate polynomial would be:
 
-16*X^2*Y + 12*X*Y - 4*Y - 1
+16\*X^2\*Y + 12\*X\*Y - 4\*Y - 1
 
 
 #
