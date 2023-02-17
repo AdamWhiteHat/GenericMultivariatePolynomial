@@ -82,7 +82,25 @@ namespace ExtendedArithmetic
 			{
 				return false;
 			}
-			if (!GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One) && (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero)))
+			if (GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.Zero) ||
+				GenericArithmetic<T>.Equal(left.CoEfficient, GenericArithmetic<T>.Zero))
+			{
+				return false;
+			}
+
+			if (GenericArithmetic<T>.Equal(right.CoEfficient, left.CoEfficient))
+			{
+				return true;
+			}
+
+			// 1 is a factor of every number.
+			// Note that we have already determined it shares at least one variable by this point.
+			if (GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.One))
+			{
+				return true;
+			}
+
+			if (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Modulo(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.Zero))
 			{
 				return false;
 			}
@@ -287,20 +305,23 @@ namespace ExtendedArithmetic
 			{
 				variableString = string.Join("*", Variables.Select(v => v.ToString()));
 			}
-			else if (GenericArithmetic<T>.Equal(GenericArithmetic<T>.Abs(CoEfficient), GenericArithmetic<T>.One))
+
+			bool variableStringEmpty = string.IsNullOrWhiteSpace(variableString);
+
+			if (variableStringEmpty && GenericArithmetic<T>.Equal(GenericArithmetic<T>.Abs(CoEfficient), GenericArithmetic<T>.One))
 			{
 				coefficientString = CoEfficient.ToString();
 			}
 
 			if (!GenericArithmetic<T>.Equal(GenericArithmetic<T>.Abs(CoEfficient), GenericArithmetic<T>.One))
 			{
-				if (Variables.Any())
+				if (!variableStringEmpty)
 				{
 					multiplyString = "*";
 				}
 				coefficientString = CoEfficient.ToString();
 			}
-			else if (Variables.Any() && GenericArithmetic<T>.Sign(CoEfficient) == -1)
+			else if (!variableStringEmpty && GenericArithmetic<T>.Sign(CoEfficient) == -1)
 			{
 				coefficientString = "-";
 			}

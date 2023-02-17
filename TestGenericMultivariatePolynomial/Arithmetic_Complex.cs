@@ -95,6 +95,13 @@ namespace TestGenericPolynomial
 		}
 
 		[Test]
+		[TestCase("(1, 0)", "a", "(2, 0)")]
+		public override void TestDivide_UserSubmittedIssueNo1(string expected1, string expected2, string expected3)
+		{
+			base.TestDivide_UserSubmittedIssueNo1(expected1, expected2, expected3);
+		}
+
+		[Test]
 		[TestCase("2*X*Y^2 - 1", "2", "(4, 0)*X^2*Y^4 + (-4, 0)*X*Y^2 + (1, -0)")]
 		public override void TestPow(string powerBase, string exponent, string expected)
 		{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("TestGenericMultivariatePolynomial")]
@@ -204,37 +205,47 @@ namespace ExtendedArithmetic
 			if (Terms.Length > 1)
 			{
 				var a_noOrdering = Terms.ToList();
-				var orderedEnumerable = Terms.OrderBy(t => t.Degree); // First by degree
+				var orderedEnumerable = Terms.OrderByDescending(t => t.Degree); // First by degree
+#if DEBUG
 				var b_byDegree = orderedEnumerable.ToList();
 				List<int> degrees = orderedEnumerable.Select(t => t.Degree).ToList();
+#endif
 
-				orderedEnumerable = orderedEnumerable.ThenByDescending(t => t.VariableCount()); // Then by variable count
+				orderedEnumerable = orderedEnumerable.ThenBy(t => t.VariableCount()); // Then by variable count
+#if DEBUG
 				var c_byVariableCount = orderedEnumerable.ToList();
 				List<int> variableCounts = orderedEnumerable.Select(t => t.VariableCount()).ToList();
+#endif
 
 				List<Term<T>> d_byCoefficient;
 				Type tType = typeof(T);
 				Type iComparableType = tType.GetInterface("IComparable");
 				if (iComparableType != null)
 				{
-					orderedEnumerable = orderedEnumerable.ThenBy(t => t.CoEfficient); // Then by coefficient value					
+					orderedEnumerable = orderedEnumerable.ThenByDescending(t => t.CoEfficient); // Then by coefficient value					
+#if DEBUG
 					d_byCoefficient = orderedEnumerable.ToList();
+#endif
 				}
 				else
 				{
 					if (ComplexHelperMethods.IsComplexValueType(tType))
 					{
-						orderedEnumerable = orderedEnumerable.ThenBy(t => t.CoEfficient, new ComplexComparer<T>());
+						orderedEnumerable = orderedEnumerable.ThenByDescending(t => t.CoEfficient, new ComplexComparer<T>());
+#if DEBUG
 						d_byCoefficient = orderedEnumerable.ToList();
+#endif
 					}
 				}
 
 				orderedEnumerable = orderedEnumerable
-					.ThenByDescending(t =>
+					.ThenBy(t =>
 						new string(t.Variables.OrderBy(v => v.Symbol).Select(v => v.Symbol).ToArray())
 					); // Lastly, lexicographic order of variables. Descending order because zero degree terms (smaller stuff) goes first.
 
+#if DEBUG
 				var e_bySymbols = orderedEnumerable.ToList();
+#endif
 
 				Terms = orderedEnumerable.ToArray();
 			}
@@ -518,34 +529,114 @@ namespace ExtendedArithmetic
 
 		public static MultivariatePolynomial<T> Divide(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			List<Term<T>> newTermsList = new List<Term<T>>();
-			List<Term<T>> leftTermsList = CloneHelper<Term<T>>.CloneCollection(left.Terms).ToList();
+			// Because multivariate polynomial division is a whole different beast,
+			// this method handles two different cases:
+			// 1) Where both polynomials contain 1 or less variables and where both of those variables are the same (when applicable)
+			// 2) Where one or both polynomials are multivariate (i.e. All other cases)
+			//
+			//
 
-			foreach (Term<T> rightTerm in right.Terms)
+			if (left == null) throw new ArgumentNullException(nameof(left));
+			if (right == null) throw new ArgumentNullException(nameof(right));
+
+			List<char> leftSymbols = left.Terms.SelectMany(t => t.Variables.Where(v => v.Exponent > 0).Select(v => v.Symbol)).Distinct().ToList();
+			List<char> rightSymbols = right.Terms.SelectMany(t => t.Variables.Where(v => v.Exponent > 0).Select(v => v.Symbol)).Distinct().ToList();
+			List<char> combinedSymbols = leftSymbols.Concat(rightSymbols).Distinct().ToList();
+
+			// If polynomial is actually univariate
+			if (combinedSymbols.Count <= 1)
 			{
-				var matches = leftTermsList.Where(leftTerm => Term<T>.ShareCommonFactor(leftTerm, rightTerm)).ToList();
-				if (matches.Any())
+				if (right.Degree > left.Degree)
 				{
-					foreach (Term<T> matchTerm in matches)
+					return left;
+				}
+
+				int rightDegree = right.Degree;
+				int quotientDegree = (left.Degree - rightDegree) + 1;
+
+				// Turn an array of Terms into an array of coefficients, including terms with coefficient of zero,
+				// such that index into the array encodes its degree/exponent
+				T[] rem = Enumerable.Repeat(GenericArithmetic<T>.Zero, left.Degree + 1).ToArray();
+				foreach (Term<T> t in left.Terms)
+				{
+					rem[t.Degree] = t.CoEfficient;
+				}
+				// Turn an array of Terms into an array of coefficients
+				T[] rightCoeffs = Enumerable.Repeat(GenericArithmetic<T>.Zero, rightDegree + 1).ToArray();
+				foreach (Term<T> t in right.Terms)
+				{
+					rightCoeffs[t.Degree] = t.CoEfficient;
+				}
+				// Array of coefficients to hold our result.
+				T[] quotient = Enumerable.Repeat(GenericArithmetic<T>.Zero, quotientDegree + 1).ToArray();
+
+				T leadingCoefficent = rightCoeffs[rightDegree];
+
+				// The leading coefficient is the only number we ever divide by
+				// (so if right is monic, polynomial division does not involve division at all!)
+				for (int i = quotientDegree - 1; i >= 0; i--)
+				{
+					quotient[i] = GenericArithmetic<T>.Divide(rem[rightDegree + i], leadingCoefficent);
+					rem[rightDegree + i] = GenericArithmetic<T>.Zero;
+
+					for (int j = rightDegree + i - 1; j >= i; j--)
 					{
-						leftTermsList.Remove(matchTerm);
-						Term<T> quotient = Term<T>.Divide(matchTerm, rightTerm);
-						if (quotient != Term<T>.Empty)
+						rem[j] = GenericArithmetic<T>.Subtract(rem[j], GenericArithmetic<T>.Multiply(quotient[i], rightCoeffs[j - i]));
+					}
+				}
+
+				// Turn array of coefficients into array of terms.
+				char symbol = 'X';
+				if (combinedSymbols.Any())
+				{
+					symbol = combinedSymbols.First();
+				}
+				List<Term<T>> newTerms = new List<Term<T>>();
+				int index = -1;
+				foreach (T q in quotient)
+				{
+					index++;
+
+					if (!GenericArithmetic<T>.Equal(q, GenericArithmetic<T>.Zero))
+					{
+						newTerms.Add(new Term<T>(q, new Indeterminate[] { new Indeterminate(symbol, index) }));
+					}
+				}
+
+				return new MultivariatePolynomial<T>(newTerms.ToArray());
+			}
+			else // All other cases (i.e. actually multivariate)
+			{
+				List<Term<T>> newTermsList = new List<Term<T>>();
+				List<Term<T>> leftTermsList = CloneHelper<Term<T>>.CloneCollection(left.Terms).ToList();
+				List<Term<T>> rightTermsList = CloneHelper<Term<T>>.CloneCollection(right.Terms).ToList();
+
+				foreach (Term<T> rightTerm in rightTermsList)
+				{
+					var matches = leftTermsList.Where(leftTerm => Term<T>.ShareCommonFactor(leftTerm, rightTerm)).ToList();
+					if (matches.Any())
+					{
+						foreach (Term<T> matchTerm in matches)
 						{
-							if (!newTermsList.Any(lt => lt.Equals(quotient)))
+							leftTermsList.Remove(matchTerm);
+							Term<T> quotient = Term<T>.Divide(matchTerm, rightTerm);
+							if (quotient != Term<T>.Empty)
 							{
-								newTermsList.Add(quotient);
+								if (!newTermsList.Any(lt => lt.Equals(quotient)))
+								{
+									newTermsList.Add(quotient);
+								}
 							}
 						}
 					}
+					else
+					{
+						///newTermsList.Add(rightTerm);
+					}
 				}
-				else
-				{
-					///newTermsList.Add(rightTerm);
-				}
+				MultivariatePolynomial<T> result = new MultivariatePolynomial<T>(newTermsList.ToArray());
+				return result;
 			}
-			MultivariatePolynomial<T> result = new MultivariatePolynomial<T>(newTermsList.ToArray());
-			return result;
 		}
 
 		#endregion
@@ -689,7 +780,7 @@ namespace ExtendedArithmetic
 			string termString = string.Empty;
 			string result = string.Empty;
 
-			result = string.Join(" + ", Terms.Reverse().Select(trm => trm.ToString()));
+			result = string.Join(" + ", Terms.Select(trm => trm.ToString()));
 			result = result.Replace(" + -", " - ");
 
 			return result;

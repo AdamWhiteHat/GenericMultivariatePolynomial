@@ -186,6 +186,45 @@ namespace TestMultivariatePolynomial
 		}
 
 		[Test]
+		[TestCase("1", "a", "2")]
+		public virtual void TestDivide_UserSubmittedIssueNo1(string expected1, string expected2, string expected3)
+		{
+			Indeterminate[] ind1 = new Indeterminate[] { new Indeterminate('a', 1) };
+			Indeterminate[] ind2 = new Indeterminate[0];
+
+			Term<T>[] terms = new Term<T>[] { new Term<T>(GenericArithmetic<T>.Two, ind1) };
+			MultivariatePolynomial<T> pol1 = new MultivariatePolynomial<T>(terms); // MultivariatePolynomial.Parse("2*a");
+
+			Term<T>[] terms2 = new Term<T>[] { new Term<T>(GenericArithmetic<T>.Two, ind2) };
+			MultivariatePolynomial<T> pol2 = new MultivariatePolynomial<T>(terms2); // MultivariatePolynomial.Parse("2");
+
+			Term<T>[] terms3 = new Term<T>[] { new Term<T>(GenericArithmetic<T>.One, ind1) };
+			MultivariatePolynomial<T> pol3 = new MultivariatePolynomial<T>(terms3); // MultivariatePolynomial.Parse("a");
+
+			TestContext.WriteLine($"pol1 = {pol1}");
+			TestContext.WriteLine($"pol2 = {pol2}");
+			TestContext.WriteLine($"pol3 = {pol3}");
+			TestContext.WriteLine("");
+
+			MultivariatePolynomial<T> quotient1 = MultivariatePolynomial<T>.Divide(pol1, pol1);
+			MultivariatePolynomial<T> quotient2 = MultivariatePolynomial<T>.Divide(pol1, pol2);
+			MultivariatePolynomial<T> quotient3 = MultivariatePolynomial<T>.Divide(pol1, pol3);
+
+			TestContext.WriteLine($"pol1/pol1 = {quotient1}");
+			TestContext.WriteLine($"pol1/pol2 = {quotient2}");
+			TestContext.WriteLine($"pol1/pol3 = {quotient3}");
+			TestContext.WriteLine("");
+
+			string actual1 = quotient1.ToString();
+			string actual2 = quotient2.ToString();
+			string actual3 = quotient3.ToString();
+
+			Assert.AreEqual(expected1, actual1);
+			Assert.AreEqual(expected2, actual2);
+			Assert.AreEqual(expected3, actual3);
+		}
+
+		[Test]
 		[TestCase("2*X*Y^2 - 1", "2", "4*X^2*Y^4 - 4*X*Y^2 + 1")]
 		public virtual void TestPow(string powerBase, string exponent, string expected)
 		{

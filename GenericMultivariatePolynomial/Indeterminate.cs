@@ -101,7 +101,19 @@ namespace ExtendedArithmetic
 
 		public override string ToString()
 		{
-			return (Exponent == 1) ? Symbol.ToString() : $"{Symbol}^{Exponent}";
+			//return (Exponent == 1) ? Symbol.ToString() : $"{Symbol}^{Exponent}";
+			if (Exponent == 0)
+			{
+				return string.Empty;
+			}
+			else if (Exponent == 1)
+			{
+				return Symbol.ToString();
+			}
+			else
+			{
+				return $"{Symbol}^{Exponent}";
+			}
 		}
 
 		#endregion

@@ -85,7 +85,7 @@ namespace TestMultivariatePolynomial
 		{
 			MultivariatePolynomial<T> testPolynomial = MultivariatePolynomial<T>.Parse(polynomial);
 			string polynomialActual = testPolynomial.ToString();
-			string leadingTermActual = testPolynomial.Terms[2].ToString();
+			string leadingTermActual = testPolynomial.Terms[0].ToString();
 			string secondTermActual = testPolynomial.Terms[1].ToString();
 
 			Assert.AreEqual(polynomialExpected, polynomialActual, $"Expected: \"{polynomialExpected}\"; Actual: \"{polynomialActual}\"");
@@ -149,6 +149,13 @@ namespace TestMultivariatePolynomial
 		{
 			MultivariatePolynomial<T> poly = MultivariatePolynomial<T>.Parse(toParse);
 			string actual = poly.ToString();
+
+			string debug = string.Join(Environment.NewLine,
+				poly.Terms.Select(
+					   trm =>
+							$"Deg:{trm.Degree} Var.Cnt:{trm.VariableCount()} CoEff:{trm.CoEfficient} {string.Join("", trm.Variables.Select(ind => ind.Symbol).OrderBy(c => c).ToList())} => {trm.ToString()}"));
+			TestContext.WriteLine($"Term Info:");
+			TestContext.WriteLine(debug);
 
 			TestContext.WriteLine($"Result: \"{actual}\".");
 			Assert.AreEqual(expected, actual, $"Test of: Monomial Ordering");
