@@ -7,7 +7,7 @@ namespace ExtendedArithmetic
 {
 	public class Term<T> : ICloneable<Term<T>>, IEquatable<Term<T>>, IEqualityComparer<Term<T>>
 	{
-		public T CoEfficient { get; }
+		public T CoEfficient { get; set; }
 		public Indeterminate[] Variables { get; private set; }
 		public int Degree { get { return Variables.Any() ? Variables.Select(v => v.Exponent).Sum() : 0; } }
 
