@@ -284,10 +284,13 @@ namespace ExtendedArithmetic
 						.Select(indetrmnt =>
 							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
 											  .Select(tup => GenericArithmetic<T>.Power(tup.Item2, indetrmnt.Exponent))
-											  .Single()
+											  .FirstOrDefault()
 						);
 
-					termValue = GenericArithmetic<T>.Multiply(termValue, variableValues.Aggregate(GenericArithmetic<T>.Multiply));
+					if (variableValues.Any())
+					{
+						termValue = GenericArithmetic<T>.Multiply(termValue, variableValues.Aggregate(GenericArithmetic<T>.Multiply));
+					}
 				}
 
 				result = GenericArithmetic<T>.Add(result, termValue);
@@ -343,52 +346,212 @@ namespace ExtendedArithmetic
 
 		public static MultivariatePolynomial<T> GCD(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
-			MultivariatePolynomial<T> dividend = left.Clone();
-			MultivariatePolynomial<T> divisor = right.Clone();
-			MultivariatePolynomial<T> quotient;
-			MultivariatePolynomial<T> remainder;
-			T dividendLeadingCoefficient = GenericArithmetic<T>.Zero;
-			T divisorLeadingCoefficient = GenericArithmetic<T>.Zero;
+			// TODO: This method needs to employ several strategies in order to perform GCD:
+			//
+			// IF
+			//		The polynomial only contains 1 indeterminant,
+			//		that is, if the polynomial is actually univariate
+			// THEN
+			//		Attempt to factor the polynomial into roots (X + 1)(X + 3)(X + 6)
+			//		by "factoring" (i.e. apply the Factor method of my univariate polynomial library ExtendedArithmetic.Polynomial)
+			//		Remove from the dividend matching roots in the divisor.
+			// ELSE
+			//		Groebner basis methods?
+			//
 
-			bool swap = false;
+			if (left == null) throw new ArgumentNullException(nameof(left));
+			if (right == null) throw new ArgumentNullException(nameof(right));
 
-			do
+			List<char> leftSymbols = left.Terms.SelectMany(t => t.Variables.Where(v => v.Exponent > 0).Select(v => v.Symbol)).Distinct().ToList();
+			List<char> rightSymbols = right.Terms.SelectMany(t => t.Variables.Where(v => v.Exponent > 0).Select(v => v.Symbol)).Distinct().ToList();
+			List<char> combinedSymbols = leftSymbols.Concat(rightSymbols).Distinct().ToList();
+
+			// If polynomial is actually univariate
+			if (combinedSymbols.Count <= 1)
 			{
-				swap = false;
+				List<MultivariatePolynomial<T>> leftFactors = Factor(left);
+				List<MultivariatePolynomial<T>> rightFactors = Factor(right);
 
-				dividendLeadingCoefficient = dividend.Terms.Last().CoEfficient;
-				divisorLeadingCoefficient = divisor.Terms.Last().CoEfficient;
+				Console.WriteLine("Left.Factors():");
+				Console.WriteLine(string.Join(Environment.NewLine, leftFactors));
+				Console.WriteLine("");
 
-				if (dividend.Degree < divisor.Degree)
+				Console.WriteLine("Right.Factors():");
+				Console.WriteLine(string.Join(Environment.NewLine, rightFactors));
+				Console.WriteLine();
+
+
+				List<MultivariatePolynomial<T>> smaller = leftFactors;
+				List<MultivariatePolynomial<T>> larger = rightFactors;
+				if (leftFactors.Count > rightFactors.Count)
 				{
-					swap = true;
+					smaller = rightFactors;
+					larger = leftFactors;
 				}
-				else if ((dividend.Degree == divisor.Degree) && GenericArithmetic<T>.LessThan(dividendLeadingCoefficient, divisorLeadingCoefficient))
+
+				List<MultivariatePolynomial<T>> common = new List<MultivariatePolynomial<T>>();
+				foreach (var factor in smaller)
 				{
-					swap = true;
+					if (larger.Contains(factor))
+					{
+						common.Add(factor);
+					}
 				}
 
-				if (swap)
+				MultivariatePolynomial<T> product = MultivariatePolynomial<T>.Parse("1");
+
+				foreach (var poly in common)
 				{
-					MultivariatePolynomial<T> temp = dividend.Clone();
-					dividend = divisor;
-					divisor = temp.Clone();
+					product = MultivariatePolynomial<T>.Multiply(product, poly);
 				}
 
-				quotient = MultivariatePolynomial<T>.Divide(dividend, divisor);
-				dividend = quotient.Clone();
-
-			}
-			while (GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(dividendLeadingCoefficient), GenericArithmetic<T>.Zero) && GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(divisorLeadingCoefficient), GenericArithmetic<T>.Zero) && dividend.HasVariables() && divisor.HasVariables());
-
-			if (dividend.HasVariables())
-			{
-				return divisor.Clone();
+				return product;
 			}
 			else
 			{
-				return dividend.Clone();
+				MultivariatePolynomial<T> dividend = left.Clone();
+				MultivariatePolynomial<T> divisor = right.Clone();
+				MultivariatePolynomial<T> quotient;
+				MultivariatePolynomial<T> remainder;
+				T dividendLeadingCoefficient = GenericArithmetic<T>.Zero;
+				T divisorLeadingCoefficient = GenericArithmetic<T>.Zero;
+
+				bool swap = false;
+
+				do
+				{
+					swap = false;
+
+					dividendLeadingCoefficient = dividend.Terms.Last().CoEfficient;
+					divisorLeadingCoefficient = divisor.Terms.Last().CoEfficient;
+
+					if (dividend.Degree < divisor.Degree)
+					{
+						swap = true;
+					}
+					else if ((dividend.Degree == divisor.Degree) && GenericArithmetic<T>.LessThan(dividendLeadingCoefficient, divisorLeadingCoefficient))
+					{
+						swap = true;
+					}
+
+					if (swap)
+					{
+						MultivariatePolynomial<T> temp = dividend.Clone();
+						dividend = divisor;
+						divisor = temp.Clone();
+					}
+
+					quotient = MultivariatePolynomial<T>.Divide(dividend, divisor);
+					dividend = quotient.Clone();
+
+				}
+				while (GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(dividendLeadingCoefficient), GenericArithmetic<T>.Zero) && GenericArithmetic<T>.GreaterThan(GenericArithmetic<T>.Abs(divisorLeadingCoefficient), GenericArithmetic<T>.Zero) && dividend.HasVariables() && divisor.HasVariables());
+
+				if (dividend.HasVariables())
+				{
+					return divisor.Clone();
+				}
+				else
+				{
+					return dividend.Clone();
+				}
 			}
+		}
+
+		/// <summary>
+		/// Factors the specified polynomial.
+		/// </summary>
+		public static List<MultivariatePolynomial<T>> Factor(MultivariatePolynomial<T> polynomial)
+		{
+			if (polynomial == null) throw new ArgumentNullException(nameof(polynomial));
+
+			List<MultivariatePolynomial<T>> results = new List<MultivariatePolynomial<T>>();
+
+			List<char> symbols = polynomial.Terms.SelectMany(t => t.Variables.Where(v => v.Exponent > 0).Select(v => v.Symbol)).Distinct().ToList();
+			if (symbols.Count >= 1) // Rational root theorem, essentially
+			{
+				char symbol = symbols.First();
+
+				MultivariatePolynomial<T> remainingPoly = polynomial.Clone();
+
+				IEnumerable<T> coefficients = remainingPoly.Terms.Select(trm => trm.CoEfficient);
+
+				T gcd = GenericArithmetic<T>.GCD(coefficients);
+				if (GenericArithmetic<T>.GreaterThan(gcd, GenericArithmetic<T>.One))
+				{
+					MultivariatePolynomial<T> gcdPoly = MultivariatePolynomial<T>.Parse(gcd.ToString());
+					results.Add(gcdPoly);
+					remainingPoly = Divide(remainingPoly, gcdPoly);
+				}
+
+				if (remainingPoly.Degree == 0)
+				{
+					return results;
+				}
+
+				int resultCount = -1;
+
+				while (remainingPoly.Degree > 0)
+				{
+					if (resultCount == results.Count)
+					{
+						break;
+					}
+
+					var leadingCoeffQ = remainingPoly.Terms.First().CoEfficient;
+					var constantCoeffP = remainingPoly.Terms.Last().CoEfficient;
+
+					var constantDivisors = GenericArithmetic<T>.GetAllDivisors(constantCoeffP).ToList();
+					var leadingDivisors = GenericArithmetic<T>.GetAllDivisors(leadingCoeffQ).ToList();
+
+					// <(denominator/numerator), numerator, denominator>
+					List<Tuple<T, T, T>> candidates =
+						constantDivisors.SelectMany(n => leadingDivisors.SelectMany(d =>
+						{
+							List<Tuple<T, T, T>> selected = new List<Tuple<T, T, T>>();
+							T num1 = n;
+							T num2 = GenericArithmetic<T>.Negate(n);
+							T denom = d;
+
+							T quotient1 = GenericArithmetic<T>.Divide(num1, denom);
+							T quotient2 = GenericArithmetic<T>.Divide(num2, denom);
+							selected.Add(new Tuple<T, T, T>(quotient1, num1, denom));
+							selected.Add(new Tuple<T, T, T>(quotient2, num2, denom));
+
+							return selected;
+						})).ToList();
+
+					candidates = candidates.OrderBy(tup => GenericArithmetic<T>.Abs(tup.Item1))
+										   .ThenByDescending(tup => GenericArithmetic<T>.Sign(tup.Item1))
+										   .ToList();
+
+					resultCount = results.Count;
+
+					foreach (Tuple<T, T, T> candidate in candidates)
+					{
+						T evalResult = remainingPoly.Evaluate(new List<Tuple<char, T>>() { new Tuple<char, T>(symbol, candidate.Item1) });
+						bool isRoot = GenericArithmetic<T>.Equal(evalResult, GenericArithmetic<T>.Zero);
+
+						if (!isRoot)
+						{
+							continue;
+						}
+
+						string rootMonomial = $"{candidate.Item3}*{symbol} {(GenericArithmetic<T>.Sign(GenericArithmetic<T>.Negate(candidate.Item2)) == -1 ? "-" : "+")} {GenericArithmetic<T>.Abs(candidate.Item2)}";
+						MultivariatePolynomial<T> factor = MultivariatePolynomial<T>.Parse(rootMonomial);
+
+						remainingPoly = Divide(remainingPoly, factor);
+						results.Add(factor);
+
+						break;
+					}
+				}
+			}
+			else
+			{
+
+			}
+			return results;
 		}
 
 		public static MultivariatePolynomial<T> Sum(IEnumerable<MultivariatePolynomial<T>> polys)
@@ -441,7 +604,7 @@ namespace ExtendedArithmetic
 
 			foreach (Term<T> rightTerm in right.Terms)
 			{
-				var match = leftTermsList.Where(leftTerm => Term<T>.AreIdentical(leftTerm, rightTerm));
+				var match = leftTermsList.Where(leftTerm => Term<T>.HasIdenticalIndeterminates(leftTerm, rightTerm));
 				if (match.Any())
 				{
 					Term<T> matchTerm = match.Single();
@@ -482,7 +645,7 @@ namespace ExtendedArithmetic
 					Term<T> newTerm = Term<T>.Multiply(leftTerm, rightTerm);
 
 					// Combine like terms
-					var likeTerms = resultTerms.Where(trm => Term<T>.AreIdentical(newTerm, trm));
+					var likeTerms = resultTerms.Where(trm => Term<T>.HasIdenticalIndeterminates(newTerm, trm));
 					if (likeTerms.Any())
 					{
 						resultTerms = resultTerms.Except(likeTerms).ToList();
@@ -599,7 +762,18 @@ namespace ExtendedArithmetic
 
 					if (!GenericArithmetic<T>.Equal(q, GenericArithmetic<T>.Zero))
 					{
-						newTerms.Add(new Term<T>(q, new Indeterminate[] { new Indeterminate(symbol, index) }));
+						Term<T> newTerm;
+
+						if (index == 0)
+						{
+							newTerm = new Term<T>(q, Indeterminate.Empty);
+						}
+						else
+						{
+							newTerm = new Term<T>(q, new Indeterminate[] { new Indeterminate(symbol, index) });
+						}
+
+						newTerms.Add(newTerm);
 					}
 				}
 

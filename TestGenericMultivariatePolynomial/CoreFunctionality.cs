@@ -16,6 +16,62 @@ namespace TestMultivariatePolynomial
 		public TestContext TestContext { get { return m_testContext; } set { m_testContext = value; } }
 
 		[Test]
+		[TestCase("-0",
+				  "0",
+				  "1",
+				  "-1",
+				  "X",
+				  "-X",
+				  "-X^1",
+				  "X^1",
+				  "1*X^1",
+				  "-1*X^1",
+				  "-X^0",
+				  "X^0",
+				  "1*X^0",
+				  "-1*X^0",
+				  "-1*X + 1",
+				  "-1*X - 1",
+				  "1*X - 1",
+				  "1*X + 1",
+				  "-1*X - 1*X^0")]
+		public virtual void TestParse000(params object[] arguments)
+		{
+			string[] toTest = arguments.Select(o => o.ToString()).ToArray();
+
+			foreach (string s in toTest)
+			{
+				try
+				{
+					MultivariatePolynomial<T> testPolynomial = MultivariatePolynomial<T>.Parse(s);
+					TestContext.WriteLine($"Success parsing \"{s}\"");
+				}
+				catch (Exception ex)
+				{
+
+					Assert.Fail($"MultivariatePolynomial.Parse(string) Failed to parse the string \"{s}\"");
+					TestContext.WriteLine($"{ex.GetType().Name} caught: \"{ex.Message}\".");
+				}
+			}
+		}
+
+		[Test]
+		[TestCase("-1", "1", "2")]
+		public virtual void TestParse_Constant(string minusOne, string one, string two)
+		{
+			MultivariatePolynomial<T> testMinusOne = MultivariatePolynomial<T>.Parse(minusOne);
+			MultivariatePolynomial<T> testOne = MultivariatePolynomial<T>.Parse(one);
+			MultivariatePolynomial<T> testTwo = MultivariatePolynomial<T>.Parse(two);
+
+			Assert.IsFalse(testMinusOne.Terms.All(trm => trm.Variables.Any()), "minusOne.Terms.All(trm => trm.Variables.Any())");
+			Assert.IsFalse(testOne.Terms.All(trm => trm.Variables.Any()), "one.Terms.All(trm => trm.Variables.Any())");
+			Assert.IsFalse(testTwo.Terms.All(trm => trm.Variables.Any()), "two.Terms.All(trm => trm.Variables.Any())");
+
+			Term<T> term1 = Term<T>.Parse("1");
+			Assert.IsFalse(term1.Variables.Any(), "Term.Parse(\"1\").Variables.Any()");
+		}
+
+		[Test]
 		[TestCase("X*Y*Z^2 + X*Y + X*Z + Y*Z - 1", "X*Y*Z^2 + X*Y + X*Z + Y*Z - 1")]
 		public virtual void TestParse001(string toTest, string expected)
 		{
@@ -27,6 +83,23 @@ namespace TestMultivariatePolynomial
 			TestContext.WriteLine($"Expected: \"{expected}\"; Actual: \"{actual}\"");
 			TestContext.WriteLine($"Pass/Fail: \"{passFailString}\"");
 			Assert.AreEqual(expected, actual, $"MultivariatePolynomial<T>.Parse(\"{toTest}\").ToString();");
+		}
+
+		[Test]
+		[TestCase("6*Y", "Y + 6", "6*Y + 6")]
+		public virtual void TestParse002(string expected1, string expected2, string expected3)
+		{
+			MultivariatePolynomial<T> result1 = MultivariatePolynomial<T>.Multiply(MultivariatePolynomial<T>.Parse("6"), MultivariatePolynomial<T>.Parse("Y"));
+			MultivariatePolynomial<T> result2 = MultivariatePolynomial<T>.Add(MultivariatePolynomial<T>.Parse("Y"), MultivariatePolynomial<T>.Parse("6"));
+			MultivariatePolynomial<T> result3 = MultivariatePolynomial<T>.Add(result1, MultivariatePolynomial<T>.Parse("6"));
+
+			string actual1 = result1.ToString();
+			string actual2 = result2.ToString();
+			string actual3 = result3.ToString();
+
+			Assert.AreEqual(expected1, actual1, $"MultivariatePolynomial.Multiply(6, Y) = {actual1}");
+			Assert.AreEqual(expected2, actual2, $"MultivariatePolynomial.Add(Y, 6) = {actual2}");
+			Assert.AreEqual(expected3, actual3, $"MultivariatePolynomial.Add(6*Y, 6) = {actual3}");
 		}
 
 		[Test]

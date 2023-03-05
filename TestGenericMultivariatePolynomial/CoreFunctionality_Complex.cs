@@ -17,6 +17,15 @@ namespace TestGenericPolynomial
 		}
 
 		[Test]
+		[TestCase("(6, 0)*Y", "Y + (6, 0)", "(6, 0)*Y + (6, 0)")]
+
+		public override void TestParse002(string expected1, string expected2, string expected3)
+		{
+			base.TestParse002(expected1, expected2, expected3);
+		}
+
+
+		[Test]
 		[TestCase("12", "(12, 0)")]
 		public override void TestParse_ConstantPolynomial001(string toTest, string expected)
 		{

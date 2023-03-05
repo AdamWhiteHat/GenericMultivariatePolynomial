@@ -67,6 +67,13 @@ namespace TestGenericPolynomial
 		}
 
 		[Test]
+		[TestCase("X^3 + 7*X^2 + 14*X + 8", "X + 1", "X^2 + 6*X + (8, 0)", "X^2 + (2, 0)")]
+		public override void TestSubtract6(string dividend, string unit, string expectedQuotient, string expected)
+		{
+			base.TestSubtract6(dividend, unit, expectedQuotient, expected);
+		}
+
+		[Test]
 		[TestCase("6*X + 1", "6*Y + 1", "(36, 0)*X*Y + (6, 0)*X + (6, 0)*Y + (1, 0)")]
 		public override void TestMultiply1(string lhs, string rhs, string expected)
 		{
@@ -120,6 +127,41 @@ namespace TestGenericPolynomial
 		public override void TestGetDerivative2(string polynomial, string expected)
 		{
 			base.TestGetDerivative2(polynomial, expected);
+		}
+
+		public override void TestFactorization1(string polynomialToFactor, params string[] expected)
+		{
+			base.TestFactorization1(polynomialToFactor, expected);
+		}
+
+		public override void TestFactorization2(string polynomialToFactor, params string[] expected)
+		{
+			base.TestFactorization2(polynomialToFactor, expected);
+		}
+
+		public override void TestFactorization_Irreducible(string irreduciblePolynomial)
+		{
+			base.TestFactorization_Irreducible(irreduciblePolynomial);
+		}
+
+		public override void TestGCD_Univarite_1(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_1(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD_Univarite_2(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_2(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD_Univarite_3(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_3(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD(string polynomial1, string polynomial2, string expected)
+		{
+			base.TestGCD(polynomial1, polynomial2, expected);
 		}
 
 		[Test]

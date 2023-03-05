@@ -17,5 +17,40 @@ namespace TestGenericPolynomial
 		{
 			//base.TestDivide1(dividend, divisor, expected);
 		}
+
+		public override void TestFactorization1(string polynomialToFactor, params string[] expected)
+		{
+			base.TestFactorization1(polynomialToFactor, expected);
+		}
+
+		public override void TestFactorization2(string polynomialToFactor, params string[] expected)
+		{
+			base.TestFactorization2(polynomialToFactor, expected);
+		}
+
+		public override void TestFactorization_Irreducible(string irreduciblePolynomial)
+		{
+			base.TestFactorization_Irreducible(irreduciblePolynomial);
+		}
+
+		public override void TestGCD_Univarite_1(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_1(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD_Univarite_2(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_2(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD_Univarite_3(string polyString1, string polyString2, string expected)
+		{
+			base.TestGCD_Univarite_3(polyString1, polyString2, expected);
+		}
+
+		public override void TestGCD(string polynomial1, string polynomial2, string expected)
+		{
+			base.TestGCD(polynomial1, polynomial2, expected);
+		}
 	}
 }

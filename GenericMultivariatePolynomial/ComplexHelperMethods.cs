@@ -12,7 +12,7 @@ namespace ExtendedArithmetic
 	{
 		public static bool IsComplexValueType(Type type)
 		{
-			return type.Name.Contains("Complex");
+			return type.Name.Contains("Complex", StringComparison.OrdinalIgnoreCase);
 		}
 
 		public static int ComplexGetRealPartSign<T>(T value)
@@ -199,6 +199,27 @@ namespace ExtendedArithmetic
 			}
 
 			return new Complex(real, imaginary);
+		}
+
+		public static T ModuloFreeGCD<T>(T left, T right)
+		{
+			if (GenericArithmetic<T>.Equal(left, GenericArithmetic<T>.Zero))
+			{
+				return right;
+			}
+			while (GenericArithmetic<T>.NotEqual(right, GenericArithmetic<T>.Zero))
+			{
+
+				if (GenericArithmetic<T>.GreaterThan(left, right))
+				{
+					left = GenericArithmetic<T>.Subtract(left, right);
+				}
+				else
+				{
+					right = GenericArithmetic<T>.Subtract(right, left);
+				}
+			}
+			return left;
 		}
 	}
 }

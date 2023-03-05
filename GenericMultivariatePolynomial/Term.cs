@@ -11,8 +11,8 @@ namespace ExtendedArithmetic
 		public Indeterminate[] Variables { get; private set; }
 		public int Degree { get { return Variables.Any() ? Variables.Select(v => v.Exponent).Sum() : 0; } }
 
-		public static Term<T> Empty = new Term<T>(GenericArithmetic<T>.Zero, new Indeterminate[0]);
-		internal static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, new Indeterminate[] { new Indeterminate('X', 0) });
+		public static Term<T> Empty = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Empty);
+		public static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Zero);
 
 		#region Constructor & Parse
 
@@ -65,6 +65,11 @@ namespace ExtendedArithmetic
 
 			Indeterminate[] variables = parts.Select(str => Indeterminate.Parse(str)).ToArray();
 
+			if (!variables.Any())
+			{
+				variables = Indeterminate.Empty;
+			}
+
 			return new Term<T>(coefficient, variables);
 		}
 
@@ -79,11 +84,6 @@ namespace ExtendedArithmetic
 				throw new ArgumentNullException();
 			}
 			if (!left.Variables.Any(lv => right.Variables.Any(rv => rv.Equals(lv))))
-			{
-				return false;
-			}
-			if (GenericArithmetic<T>.Equal(right.CoEfficient, GenericArithmetic<T>.Zero) ||
-				GenericArithmetic<T>.Equal(left.CoEfficient, GenericArithmetic<T>.Zero))
 			{
 				return false;
 			}
@@ -104,12 +104,68 @@ namespace ExtendedArithmetic
 			{
 				return false;
 			}
+
+			if (GenericArithmetic<T>.LessThanOrEqual(GenericArithmetic<T>.GCD(left.CoEfficient, right.CoEfficient), GenericArithmetic<T>.One))
+			{
+				return false;
+			}
+
 			return true;
 		}
 
-		internal static bool AreIdentical(Term<T> left, Term<T> right)
+		internal static Tuple<T, char[]> GetCommonDivisors(params Term<T>[] terms)
 		{
-			if (left == null || right == null) { throw new ArgumentNullException(); }
+			if (terms.Any(t => t == null)) { throw new ArgumentNullException(); }
+
+			T commonDivisors = GenericArithmetic<T>.GCD(terms.Select(trm => trm.CoEfficient));
+
+			char[] commonVariables = terms.Select(trm => trm.Variables.SelectMany(indt => Enumerable.Repeat(indt.Symbol, indt.Exponent))
+																				.OrderBy(c => c)
+																				.ToList()
+											)
+											.Aggregate(Match<char>)
+											.ToArray();
+
+			return new Tuple<T, char[]>(commonDivisors, commonVariables);
+		}
+
+		internal static List<U> Match<U>(List<U> first, List<U> second)
+		{
+			List<U> smaller = first;
+			List<U> larger = second;
+			if (second.Count < first.Count)
+			{
+				smaller = second;
+				larger = first;
+			}
+
+			List<U> results = new List<U>();
+			foreach (U item in smaller)
+			{
+				U match = larger.FirstOrDefault(i => i.Equals(item));
+				if (match != null)
+				{
+					larger.Remove(match);
+					results.Add(match);
+				}
+			}
+
+			return results;
+		}
+
+		internal static bool HasIdenticalIndeterminates(Term<T> left, Term<T> right)
+		{
+			if (left == null)
+			{
+				if (right == null) { return true; }
+				throw new ArgumentNullException();
+			}
+
+			if (left.Degree == 0 && right.Degree == 0)
+			{
+				return true;
+			}
+
 			if (left.Variables.Length != right.Variables.Length) { return false; }
 
 			int index = 0;
@@ -123,19 +179,20 @@ namespace ExtendedArithmetic
 
 		internal bool HasVariables()
 		{
-			return Variables.Any();
+			if (!Variables.Any())
+			{
+				return false;
+			}
+			if (Variables.Length == 1 && Variables[0].Exponent == 0)
+			{
+				return false;
+			}
+			return true;
 		}
 
 		internal int VariableCount()
 		{
-			if (!HasVariables())
-			{
-				return 0;
-			}
-			else
-			{
-				return Variables.Length;
-			}
+			return Variables.Any() ? Variables.Where(v => v.Exponent != 0).Count() : 0;
 		}
 
 		#endregion
@@ -144,10 +201,10 @@ namespace ExtendedArithmetic
 
 		public static Term<T> Add(Term<T> left, Term<T> right)
 		{
-			if (!AreIdentical(left, right))
+			if (!HasIdenticalIndeterminates(left, right))
 			{
-				//throw new ArgumentException("Terms are incompatable for adding; Their indeterminates must match.");
-				return Empty;
+				throw new ArgumentException("Terms are incompatable for adding; Their indeterminates must match.");
+				//return Empty;
 			}
 			return new Term<T>(GenericArithmetic<T>.Add(left.CoEfficient, right.CoEfficient), left.Variables);
 		}
@@ -171,7 +228,7 @@ namespace ExtendedArithmetic
 
 			foreach (var leftVar in left.Variables)
 			{
-				var matches = rightVariables.Where(indt => indt.Symbol == leftVar.Symbol).ToList();
+				var matches = rightVariables.Where(indt => Indeterminate.AreCompatable(indt, leftVar)).ToList();
 				if (matches.Any())
 				{
 					foreach (var rightMatch in matches)
@@ -250,7 +307,12 @@ namespace ExtendedArithmetic
 		{
 			if (x == null) { return (y == null) ? true : false; }
 			if (!GenericArithmetic<T>.Equals(x.CoEfficient, y.CoEfficient)) { return false; }
-			if (!x.Variables.Any()) { return (!y.Variables.Any()) ? true : false; }
+
+			if (!x.Variables.Any() || (x.Variables.Length == 1 && x.Variables[0].Exponent == 0))
+			{
+				return (!y.Variables.Any() || (y.Variables.Length == 1 && y.Variables[0].Exponent == 0));
+			}
+
 			if (x.Variables.Length != y.Variables.Length) { return false; }
 
 			int index = 0;

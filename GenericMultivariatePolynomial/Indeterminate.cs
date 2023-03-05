@@ -11,6 +11,9 @@ namespace ExtendedArithmetic
 		public char Symbol { get; }
 		public int Exponent { get; }
 
+		internal static Indeterminate[] Empty = new Indeterminate[0];
+		internal static Indeterminate[] Zero = new Indeterminate[] { new Indeterminate('X', 0) };
+
 		private UnicodeCategory[] AllowedSymbolCategories = new UnicodeCategory[]
 		{
 			UnicodeCategory.LowercaseLetter,
@@ -84,6 +87,15 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		internal static bool AreCompatable(Indeterminate left, Indeterminate right)
+		{
+			if (left.Exponent == 0 || right.Exponent == 0)
+			{
+				return left.Exponent == right.Exponent;
+			}
+			return left.Symbol == right.Symbol;
+		}
+
 		public override bool Equals(object obj)
 		{
 			return this.Equals(obj as Indeterminate);
@@ -96,6 +108,10 @@ namespace ExtendedArithmetic
 
 		public override int GetHashCode()
 		{
+			if (Exponent == 0)
+			{
+				return new Tuple<char, int>('X', 0).GetHashCode();
+			}
 			return new Tuple<char, int>(Symbol, Exponent).GetHashCode();
 		}
 

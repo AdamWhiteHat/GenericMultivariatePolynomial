@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.VisualStudio.TestPlatform;
 using NUnit;
-using ExtendedArithmetic;
 using NUnit.Framework;
+using ExtendedArithmetic;
 
 namespace TestMultivariatePolynomial
 {
@@ -125,6 +126,32 @@ namespace TestMultivariatePolynomial
 
 			TestContext.WriteLine($"Expected: \"{expected}\"; Actual: \"{actual}\"");
 			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial<T>.Subtract: ({minuend}) - ({subtrahend})");
+		}
+
+		[Test]
+		[TestCase("X^3 + 7*X^2 + 14*X + 8", "X + 1", "X^2 + 6*X + 8", "X^2 + 2")]
+		public virtual void TestSubtract6(string dividend, string unit, string expectedQuotient, string expected)
+		{
+			MultivariatePolynomial<T> polyDividend = MultivariatePolynomial<T>.Parse(dividend);
+			MultivariatePolynomial<T> polyUnit = MultivariatePolynomial<T>.Parse(unit);
+			MultivariatePolynomial<T> quotient = MultivariatePolynomial<T>.Parse(expectedQuotient);
+
+			MultivariatePolynomial<T> specialQuotient = MultivariatePolynomial<T>.Divide(polyDividend, polyUnit);
+			MultivariatePolynomial<T> difference = MultivariatePolynomial<T>.Subtract(specialQuotient, polyUnit);
+			difference = MultivariatePolynomial<T>.Subtract(difference, polyUnit);
+			difference = MultivariatePolynomial<T>.Subtract(difference, polyUnit);
+			difference = MultivariatePolynomial<T>.Subtract(difference, polyUnit);
+			difference = MultivariatePolynomial<T>.Subtract(difference, polyUnit);
+			difference = MultivariatePolynomial<T>.Subtract(difference, polyUnit);
+
+			string actual = difference.ToString();
+
+			TestContext.WriteLine($"Difference: {difference}");
+
+			TestContext.WriteLine("");
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"A strange edge-case situation: {dividend} / {unit} = 'special' quotient who's constant has the variable X.\nWhereas a polynomial from parse has no such variable for the constant.\nThis becomes noticeable if we subtract a constant from the 'special' polynomial form:\nThe result will appear to have two constants!\nObserve:\n{expectedQuotient} SUBTRACT {unit}\n= {difference}.");
 		}
 
 		[Test]
@@ -263,6 +290,209 @@ namespace TestMultivariatePolynomial
 
 			TestContext.WriteLine($"Expected: \"{expected}\"; Actual: \"{actual}\"");
 			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial<T>.GetDerivative({polynomial});");
+		}
+
+
+		[Test]
+		[TestCase("X^4 + 8*X^3 + 21*X^2 + 22*X + 8", "X + 1", "X + 1", "X + 2", "X + 4")]
+		public virtual void TestFactorization1(string polynomialToFactor, params string[] expected)
+		{
+			MultivariatePolynomial<T> poly = MultivariatePolynomial<T>.Parse(polynomialToFactor);
+
+			List<MultivariatePolynomial<T>> results = MultivariatePolynomial<T>.Factor(poly);
+
+			string[] actual = results.Select(p => p.ToString()).ToArray();
+
+			TestContext.WriteLine($"Expected: {{ {string.Join(", ", expected)} }}");
+			TestContext.WriteLine($"Actual:   {{ {string.Join(", ", actual)} }}");
+			TestContext.WriteLine("");
+
+			Assert.AreEqual(expected.Length, actual.Length, $"expected.Length ({expected.Length}) == actual.Length ({actual.Length})");
+
+			foreach (string search in expected)
+			{
+				if (!actual.Contains(search))
+				{
+					Assert.Fail($"{{ {string.Join(", ", actual)} }} does not contain the factor \"{search}\".");
+				}
+			}
+		}
+
+		[Test]
+		[TestCase("X^3 + 6*X^2 + 11*X + 6", "X + 1", "X + 2", "X + 3")]
+		public virtual void TestFactorization2(string polynomialToFactor, params string[] expected)
+		{
+			MultivariatePolynomial<T> poly = MultivariatePolynomial<T>.Parse(polynomialToFactor);
+
+			List<MultivariatePolynomial<T>> results = MultivariatePolynomial<T>.Factor(poly);
+
+			string[] actual = results.Select(p => p.ToString()).ToArray();
+
+			TestContext.WriteLine($"Expected: {{ {string.Join(", ", expected)} }}");
+			TestContext.WriteLine($"Actual:   {{ {string.Join(", ", actual)} }}");
+			TestContext.WriteLine("");
+
+			Assert.AreEqual(expected.Length, actual.Length, $"expected.Length ({expected.Length}) == actual.Length ({actual.Length})");
+
+			foreach (string search in expected)
+			{
+				if (!actual.Contains(search))
+				{
+					Assert.Fail($"{{ {string.Join(", ", actual)} }} does not contain the factor \"{search}\".");
+				}
+			}
+		}
+
+		[Test]
+		[TestCase("X^2 + X + 1")]
+		public virtual void TestFactorization_Irreducible(string irreduciblePolynomial)
+		{
+			MultivariatePolynomial<T> poly = MultivariatePolynomial<T>.Parse(irreduciblePolynomial);
+
+			List<MultivariatePolynomial<T>> results = MultivariatePolynomial<T>.Factor(poly);
+
+			string[] actual = results.Select(p => p.ToString()).ToArray();
+
+			string[] expected = new string[] { };
+
+			TestContext.WriteLine($"Expected: {{ {string.Join(", ", expected)} }}");
+			TestContext.WriteLine($"Actual:   {{ {string.Join(", ", actual)} }}");
+			TestContext.WriteLine("");
+
+			Assert.AreEqual(expected.Length, actual.Length, $"expected.Length ({expected.Length}) == actual.Length ({actual.Length})");
+
+			foreach (string search in expected)
+			{
+				if (!actual.Contains(search))
+				{
+					Assert.Fail($"{{ {string.Join(", ", actual)} }} does not contain the factor \"{search}\".");
+				}
+			}
+		}
+
+		[Test]
+		[TestCase("X^4 + 8*X^3 + 21*X^2 + 22*X + 8", "X^3 + 6*X^2 + 11*X + 6", "X^2 + 3*X + 2")]
+		public virtual void TestGCD_Univarite_1(string polyString1, string polyString2, string expected)
+		{
+			TestContext.WriteLine("<EXPECTING>");
+			TestContext.WriteLine("Left.Factors():");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 2");
+			TestContext.WriteLine("X + 4");
+			TestContext.WriteLine("");
+			TestContext.WriteLine("Right.Factors():");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 2");
+			TestContext.WriteLine("X + 3");
+			TestContext.WriteLine("</EXPECTING>");
+			TestContext.WriteLine("");
+			TestContext.WriteLine("");
+
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
+		}
+
+		[Test]
+		[TestCase("X^5 + 25*X^4 + 230*X^3 + 950*X^2 + 1689*X + 945", "X^3 + 14*X^2 + 56*X + 64", "1")]
+		public virtual void TestGCD_Univarite_2(string polyString1, string polyString2, string expected)
+		{
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
+		}
+
+		[Test]
+		[TestCase("X^5 + 9*X^4 + 29*X^3 + 43*X^2 + 30*X + 8", "X^4 + 7*X^3 + 17*X^2 + 17*X + 6", "X^3 + 4*X^2 + 5*X + 2")]
+		public virtual void TestGCD_Univarite_3(string polyString1, string polyString2, string expected)
+		{
+			TestContext.WriteLine("<EXPECTING>");
+			TestContext.WriteLine("Left.Factors():");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 2");
+			TestContext.WriteLine("X + 4");
+			TestContext.WriteLine("");
+			TestContext.WriteLine("Right.Factors():");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 1");
+			TestContext.WriteLine("X + 2");
+			TestContext.WriteLine("X + 3");
+			TestContext.WriteLine("</EXPECTING>");
+			TestContext.WriteLine("");
+			TestContext.WriteLine("");
+			TestContext.WriteLine("<ACTUAL>");
+
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			TestContext.WriteLine("</ACTUAL>");
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
+		}
+
+		[Ignore("Work in progress")]
+		[TestCase("3*X*Y + 3*X + 2*Y + 2", "4*X*Y + 4*X + 3*Y + 3", "Y + 1")]
+		public void TestGCD_Multivarite_1(string polyString1, string polyString2, string expected)
+		{
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
+		}
+
+		[Ignore("Work in progress")]
+		[TestCase("6*X^2 + 3*X*Y + 2*X + Y", "10*Z^2*X + 5*Z^2*Y + 2*Z*X + Z*Y - 2*X - Y", "2*X + Y")]
+		public void TestGCD_Multivarite_2(string polyString1, string polyString2, string expected)
+		{
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
+		}
+
+		[Ignore("Work in progress")]
+		[TestCase("3*X^2*Y - Y", "2*Y^3 + 3*Y*Z", "Y")]
+		public void TestGCD_Multivarite_3(string polyString1, string polyString2, string expected)
+		{
+			MultivariatePolynomial<T> poly1 = MultivariatePolynomial<T>.Parse(polyString1);
+			MultivariatePolynomial<T> poly2 = MultivariatePolynomial<T>.Parse(polyString2);
+			MultivariatePolynomial<T> gcd = MultivariatePolynomial<T>.GCD(poly1, poly2);
+
+			string actual = gcd.ToString();
+
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual: \"{actual}\"");
+			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial.GCD({polyString1}, {polyString2});");
 		}
 
 		[Test]

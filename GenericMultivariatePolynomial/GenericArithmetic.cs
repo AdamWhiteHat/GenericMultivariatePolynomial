@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ExtendedArithmetic.Internal;
+using System.Collections;
 
 namespace ExtendedArithmetic
 {
@@ -319,20 +320,28 @@ namespace ExtendedArithmetic
 
 		public static T GCD(T left, T right)
 		{
-			T absLeft = Abs(left);
-			T absRight = Abs(right);
-			while (NotEqual(absLeft, Zero) && NotEqual(absRight, Zero))
+			if (ComplexHelperMethods.IsComplexValueType(typeof(T))
+				|| typeof(T).Name.Contains("BigDecimal", StringComparison.OrdinalIgnoreCase))
 			{
-				if (GreaterThan(absLeft, absRight))
-				{
-					absLeft = Modulo(absLeft, absRight);
-				}
-				else
-				{
-					absRight = Modulo(absRight, absLeft);
-				}
+				return ComplexHelperMethods.ModuloFreeGCD(left, right);
 			}
-			return Max(absLeft, absRight);
+			else
+			{
+				T absLeft = Abs(left);
+				T absRight = Abs(right);
+				while (NotEqual(absLeft, Zero) && NotEqual(absRight, Zero))
+				{
+					if (GreaterThan(absLeft, absRight))
+					{
+						absLeft = Modulo(absLeft, absRight);
+					}
+					else
+					{
+						absRight = Modulo(absRight, absLeft);
+					}
+				}
+				return Max(absLeft, absRight);
+			}
 		}
 
 		public static T Log(T value, double baseValue)
@@ -343,6 +352,85 @@ namespace ExtendedArithmetic
 				_logFunction = GenericArithmeticFactory<T>.CreateLogFunction();
 			}
 			return _logFunction.Invoke(value, baseValue);
+		}
+
+		/// <summary>
+		/// Returns all divisors of an integer, including 1 and itself.
+		/// </summary>
+		public static List<T> GetAllDivisors(T value)
+		{
+			if (IsFloatingPointType(typeof(T)))
+			{
+				return GetAllDivisors_IntegerImpl(value);
+			}
+
+			T n = value;
+
+			if (Equal(Abs(n), One))
+			{
+				return new List<T> { n };
+			}
+
+			List<T> results = new List<T>();
+			if (Sign(n) == -1)
+			{
+				results.Add(MinusOne);
+				n = Multiply(n, MinusOne);
+			}
+
+			for (T i = One; LessThan(Multiply(i, i), n); i = Increment(i))
+			{
+				if (Equal(Modulo(n, i), Zero))
+				{
+					results.Add(i);
+				}
+			}
+
+			for (T i = SquareRoot(n); GreaterThanOrEqual(i, One); i = Decrement(i))
+			{
+				if (Equal(Modulo(n, i), Zero))
+				{
+					results.Add(Divide(n, i));
+				}
+			}
+			return results;
+		}
+
+		private static List<T> GetAllDivisors_IntegerImpl(T value)
+		{
+			int n = ConvertImplementation<T, int>.Convert(value);
+
+			List<int> results = new List<int>();
+			if (Math.Abs(n) == 1)
+			{
+				results.Add(n);
+			}
+			else
+			{
+				if (Math.Sign(n) == -1)
+				{
+					results.Add(-1);
+					n = n * -1;
+				}
+
+				for (int i = 1; i * i < n; i++)
+				{
+					if (GenericArithmetic<int>.Modulo(n, i) == 0)
+					{
+						results.Add(i);
+					}
+				}
+
+				for (int i = GenericArithmetic<int>.SquareRoot(n); i >= 1; i--)
+				{
+					if (GenericArithmetic<int>.Modulo(n, i) == 0)
+					{
+						results.Add(n / i);
+					}
+				}
+			}
+
+			return results.Select(i => ConvertImplementation<int, T>.Convert(i)).ToList();
 		}
 
 		public static byte[] ToBytes(T input)
@@ -413,6 +501,67 @@ namespace ExtendedArithmetic
 			//else if (type == typeof(BigComplex)) { }
 
 			return false;
+		}
+
+		public static bool IsFloatingPointType(Type type)
+		{
+			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+			{
+				type = type.GetGenericArguments()[0];
+			}
+			TypeCode typeCode = GenericArithmeticCommon.GetTypeCode(typeof(T));
+
+			if (typeCode == TypeCode.Single || typeCode == TypeCode.Double || typeCode == TypeCode.Decimal)
+			{
+				return true;
+			}
+
+			//if (type.Name.Contains("Decimal", StringComparison.OrdinalIgnoreCase)) // BigDecimal
+			//{
+			//	return true;
+			//}
+
+			return false;
+		}
+
+		public static bool IsIntegerType(Type type)
+		{
+			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+			{
+				type = type.GetGenericArguments()[0];
+			}
+			TypeCode typeCode = GenericArithmeticCommon.GetTypeCode(typeof(T));
+			uint typeCodeValue = (uint)typeCode;
+
+			if (type == typeof(BigInteger))
+			{
+				return true;
+			}
+			else if (typeCodeValue >= 5 && typeCodeValue <= 12) // Is between SByte and UInt64
+			{
+				return true;
+			}
+			else if (typeCode == TypeCode.Double || typeCode == TypeCode.Decimal)
+			{
+				return false;
+			}
+			else if (ComplexHelperMethods.IsComplexValueType(type))
+			{
+				return false;
+			}
+			else if (type.Name.Contains("Rational", StringComparison.OrdinalIgnoreCase) // BigRational
+					|| type.Name.Contains("Decimal", StringComparison.OrdinalIgnoreCase) // BigDecimal
+					|| type.Name.Contains("Fraction", StringComparison.OrdinalIgnoreCase) // Fraction
+					|| type.Name.Contains("Float", StringComparison.OrdinalIgnoreCase)) // BigFloat
+			{
+				return false;
+			}
+			else if (type.Name.Contains("Integer", StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+
+			return false; // ???
 		}
 
 		public static bool IsFractionalValue(T value)
