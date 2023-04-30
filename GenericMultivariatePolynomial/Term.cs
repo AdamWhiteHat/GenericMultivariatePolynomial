@@ -5,23 +5,60 @@ using System.Collections.Generic;
 
 namespace ExtendedArithmetic
 {
+	/// <summary>
+	/// Class Term.
+	/// Implements the <see cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.Term{T}}" />
+	/// Implements the <see cref="System.IEquatable{ExtendedArithmetic.Term{T}}" />
+	/// Implements the <see cref="System.Collections.Generic.IEqualityComparer{ExtendedArithmetic.Term{T}}" />
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <seealso cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.Term{T}}" />
+	/// <seealso cref="System.IEquatable{ExtendedArithmetic.Term{T}}" />
+	/// <seealso cref="System.Collections.Generic.IEqualityComparer{ExtendedArithmetic.Term{T}}" />
 	public class Term<T> : ICloneable<Term<T>>, IEquatable<Term<T>>, IEqualityComparer<Term<T>>
 	{
+		/// <summary>
+		/// Gets or sets the coefficient.
+		/// </summary>
 		public T CoEfficient { get; set; }
+
+		/// <summary>
+		/// An indexer into the indeterminates (variables).
+		/// </summary>
 		public Indeterminate[] Variables { get; private set; }
+
+		/// <summary>
+		/// Gets the degree of this term.
+		/// </summary>
 		public int Degree { get { return Variables.Any() ? Variables.Select(v => v.Exponent).Sum() : 0; } }
 
+		/// <summary>
+		/// Gets a the static value that represents the empty Term.
+		/// </summary>
 		public static Term<T> Empty = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Empty);
+
+		/// <summary>
+		/// Gets a the static value that represents the zero Term.
+		/// </summary>
 		public static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Zero);
 
 		#region Constructor & Parse
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Term{T}"/> class, taking a coefficient and an array of indeterminates.
+		/// </summary>
+		/// <param name="coefficient">The coefficient.</param>
+		/// <param name="variables">The variables.</param>
 		public Term(T coefficient, Indeterminate[] variables)
 		{
 			CoEfficient = coefficient;
 			Variables = CloneHelper<Indeterminate>.CloneCollection(variables).ToArray();
 		}
 
+		/// <summary>
+		/// Constructs a new Term from its string representation.
+		/// </summary>
+		/// <exception cref="System.ArgumentException"></exception>
 		internal static Term<T> Parse(string termString)
 		{
 			if (string.IsNullOrWhiteSpace(termString)) { throw new ArgumentException(); }
@@ -77,6 +114,10 @@ namespace ExtendedArithmetic
 
 		#region Internal Helper Methods
 
+		/// <summary>
+		/// Returns true if the two Terms share a common factor.
+		/// </summary>		
+		/// <exception cref="System.ArgumentNullException"></exception>
 		internal static bool ShareCommonFactor(Term<T> left, Term<T> right)
 		{
 			if (left == null || right == null)
@@ -113,6 +154,11 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		/// <summary>
+		/// Gets the common divisors of two Terms.
+		/// </summary>
+		/// <param name="terms">The terms.</param>
+		/// <exception cref="System.ArgumentNullException"></exception>
 		internal static Tuple<T, char[]> GetCommonDivisors(params Term<T>[] terms)
 		{
 			if (terms.Any(t => t == null)) { throw new ArgumentNullException(); }
@@ -129,6 +175,9 @@ namespace ExtendedArithmetic
 			return new Tuple<T, char[]>(commonDivisors, commonVariables);
 		}
 
+		/// <summary>
+		/// Internal, generic match function.
+		/// </summary>		
 		internal static List<U> Match<U>(List<U> first, List<U> second)
 		{
 			List<U> smaller = first;
@@ -153,6 +202,10 @@ namespace ExtendedArithmetic
 			return results;
 		}
 
+		/// <summary>
+		/// Returns true if the two terms have identical indeterminates.
+		/// </summary>		
+		/// <exception cref="System.ArgumentNullException"></exception>
 		internal static bool HasIdenticalIndeterminates(Term<T> left, Term<T> right)
 		{
 			if (left == null)
@@ -177,6 +230,9 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		/// <summary>
+		/// Returns true if this Term has and variables (indeterminants).
+		/// </summary>		
 		internal bool HasVariables()
 		{
 			if (!Variables.Any())
@@ -190,6 +246,10 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		/// <summary>
+		/// Returns the count of the terms's indeterminants.
+		/// </summary>
+		/// <returns>System.Int32.</returns>
 		internal int VariableCount()
 		{
 			return Variables.Any() ? Variables.Where(v => v.Exponent != 0).Count() : 0;
@@ -199,6 +259,10 @@ namespace ExtendedArithmetic
 
 		#region Arithmetic
 
+		/// <summary>
+		/// Adds two terms together and produces a third.
+		/// </summary>
+		/// <exception cref="System.ArgumentException">Terms are incompatable for adding; Their indeterminates must match.</exception>
 		public static Term<T> Add(Term<T> left, Term<T> right)
 		{
 			if (!HasIdenticalIndeterminates(left, right))
@@ -209,16 +273,25 @@ namespace ExtendedArithmetic
 			return new Term<T>(GenericArithmetic<T>.Add(left.CoEfficient, right.CoEfficient), left.Variables);
 		}
 
+		/// <summary>
+		/// Subtracts two terms from each other, producing a third.
+		/// </summary>
 		public static Term<T> Subtract(Term<T> left, Term<T> right)
 		{
 			return Add(left, Negate(right));
 		}
 
+		/// <summary>
+		/// Negates the supplied term.
+		/// </summary>
 		public static Term<T> Negate(Term<T> term)
 		{
 			return new Term<T>(GenericArithmetic<T>.Negate(term.CoEfficient), term.Variables);
 		}
 
+		/// <summary>
+		/// Multiplies two terms together and returns the product.
+		/// </summary>		
 		public static Term<T> Multiply(Term<T> left, Term<T> right)
 		{
 			T resultCoefficient = GenericArithmetic<T>.Multiply(left.CoEfficient, right.CoEfficient);
@@ -258,6 +331,9 @@ namespace ExtendedArithmetic
 			return new Term<T>(resultCoefficient, resultVariables.ToArray());
 		}
 
+		/// <summary>
+		/// Divides two terms, producing a quotient.
+		/// </summary>
 		public static Term<T> Divide(Term<T> left, Term<T> right)
 		{
 			if (!Term<T>.ShareCommonFactor(left, right)) { return Empty; }
@@ -294,15 +370,25 @@ namespace ExtendedArithmetic
 
 		#region Overrides and Interface implementations
 
+		/// <summary>
+		/// Clones this instance.
+		/// </summary>
 		public Term<T> Clone()
 		{
 			return new Term<T>(GenericArithmetic<T>.Clone(CoEfficient), CloneHelper<Indeterminate>.CloneCollection(Variables).ToArray());
 		}
+
+		/// <summary>
+		/// Returns true if the two Terms are equal.
+		/// </summary>
 		public bool Equals(Term<T> other)
 		{
 			return this.Equals(this, other);
 		}
 
+		/// <summary>
+		/// Returns true if the two Terms are equal.
+		/// </summary>		
 		public bool Equals(Term<T> x, Term<T> y)
 		{
 			if (x == null) { return (y == null) ? true : false; }
@@ -323,16 +409,25 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		/// <summary>
+		/// Returns true if the two Terms are equal.
+		/// </summary>		
 		public override bool Equals(object obj)
 		{
 			return this.Equals(obj as Term<T>);
 		}
 
+		/// <summary>
+		/// Returns a hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+		/// </summary>
 		public int GetHashCode(Term<T> obj)
 		{
 			return obj.GetHashCode();
 		}
 
+		/// <summary>
+		/// Returns a hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+		/// </summary>
 		public override int GetHashCode()
 		{
 			int hashCode = CoEfficient.GetHashCode();
@@ -346,11 +441,17 @@ namespace ExtendedArithmetic
 			return hashCode;
 		}
 
+		/// <summary>
+		/// Combines two hash codes to make a third hash dependent on the the hash of the two properties combined.
+		/// </summary>		
 		internal static int CombineHashCodes(int h1, int h2)
 		{
 			return (((h1 << 5) + h1) ^ h2);
 		}
 
+		/// <summary>
+		/// Converts the Term of the current instance to its equivalent string representation.
+		/// </summary>
 		public override string ToString()
 		{
 			if (GenericArithmetic<T>.Equal(CoEfficient, GenericArithmetic<T>.Zero))

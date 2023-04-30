@@ -31,5 +31,9 @@
 	<ItemGroup>
 	    <None Include="..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="ExtendedArithmetic.GenericArithmetic" Version="2023.119.2236" />
+	</ItemGroup>
 	
 </Project>

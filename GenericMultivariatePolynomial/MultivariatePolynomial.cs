@@ -8,13 +8,29 @@ using System.Runtime.CompilerServices;
 
 namespace ExtendedArithmetic
 {
+	/// <summary>
+	/// Class MultivariatePolynomial.
+	/// Implements the <see cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.MultivariatePolynomial{T}}" />
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <seealso cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.MultivariatePolynomial{T}}" />
 	public class MultivariatePolynomial<T> : ICloneable<MultivariatePolynomial<T>>
 	{
+		/// <summary>
+		/// Indexer for the polynomial Terms
+		/// </summary>
 		public Term<T>[] Terms { get; private set; }
+
+		/// <summary>
+		/// Gets the degree of the polynomial.
+		/// </summary>
 		public int Degree { get { return Terms.Any() ? Terms.Select(t => t.Degree).Max() : 0; } }
 
 		#region Constructor & Parse
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MultivariatePolynomial{T}"/> class from an array of Terms.
+		/// </summary>
 		public MultivariatePolynomial(Term<T>[] terms)
 		{
 			IEnumerable<Term<T>> newTerms = terms?.Where(trm => !GenericArithmetic<T>.Equal(trm.CoEfficient, GenericArithmetic<T>.Zero)) ?? new Term<T>[0];
@@ -28,6 +44,21 @@ namespace ExtendedArithmetic
 			OrderMonomials();
 		}
 
+		/// <summary>
+		/// Constructs a polynomial from its string representation.
+		/// Parse does not allow implicit multiplication symbols.		
+		/// Terms with a coefficient of zero may be omitted.
+		/// Indetermenents raised to the zeroth power may be omitted.
+		/// Indetermenents raised to the first power may omit the exponentiation symbol and the one.
+		/// Whitespace is ignored.
+		/// For example, these two polynomials are identical:
+		/// 4*X^2*Y^3 + Y^2 + Z + 1
+		/// 4*X^2*Y^3 + 1*Y^2 + 1*Z^1 + 1*X^0
+		/// </summary>
+		/// <param name="polynomialString">The string to parse.</param>
+		/// <returns>MultivariatePolynomial&lt;T&gt;.</returns>
+		/// <exception cref="System.ArgumentException"></exception>
+		/// <exception cref="System.FormatException"></exception>
 		public static MultivariatePolynomial<T> Parse(string polynomialString)
 		{
 			string input = polynomialString;
@@ -200,6 +231,10 @@ namespace ExtendedArithmetic
 			return new string(outString.ToArray());
 		}
 
+		/// <summary>
+		/// Monomial ordering method.
+		/// Must produce a unique and deterministic ordering or else the multivariate arithmetic will give inconsistant answers.
+		/// </summary>
 		private void OrderMonomials()
 		{
 			if (Terms.Length > 1)
@@ -251,11 +286,17 @@ namespace ExtendedArithmetic
 			}
 		}
 
+		/// <summary>
+		/// Determines whether this instance has variables (Indeterminates).
+		/// </summary>
 		internal bool HasVariables()
 		{
 			return this.Terms.Any(t => t.HasVariables());
 		}
 
+		/// <summary>
+		/// Returns the largest coefficient of all the Terms.
+		/// </summary>
 		internal T MaxCoefficient()
 		{
 			if (HasVariables())
@@ -270,6 +311,9 @@ namespace ExtendedArithmetic
 
 		#region Evaluate
 
+		/// <summary>
+		/// Evaluates the polynomial at the specified indeterminate values.
+		/// </summary>		
 		public T Evaluate(List<Tuple<char, T>> indeterminateValues)
 		{
 			T result = GenericArithmetic<T>.Zero;
@@ -344,6 +388,12 @@ namespace ExtendedArithmetic
 
 		#region Arithmetic
 
+
+		/// <summary>
+		/// GCDs the specified left.
+		/// </summary>
+		/// <exception cref="System.ArgumentNullException">left</exception>
+		/// <exception cref="System.ArgumentNullException">right</exception>
 		public static MultivariatePolynomial<T> GCD(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
 			// TODO: This method needs to employ several strategies in order to perform GCD:
@@ -554,6 +604,9 @@ namespace ExtendedArithmetic
 			return results;
 		}
 
+		/// <summary>
+		/// Sums a collection of polynomials.
+		/// </summary>
 		public static MultivariatePolynomial<T> Sum(IEnumerable<MultivariatePolynomial<T>> polys)
 		{
 			MultivariatePolynomial<T> result = null;
@@ -571,6 +624,9 @@ namespace ExtendedArithmetic
 			return result;
 		}
 
+		/// <summary>
+		/// Products a collection of polynomials.
+		/// </summary>
 		public static MultivariatePolynomial<T> Product(IEnumerable<MultivariatePolynomial<T>> polys)
 		{
 			MultivariatePolynomial<T> result = null;
@@ -588,16 +644,25 @@ namespace ExtendedArithmetic
 			return result;
 		}
 
+		/// <summary>
+		/// Multivariate Polynomial Addition
+		/// </summary>		
 		public static MultivariatePolynomial<T> Add(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
 			return OneToOneArithmetic(left, right, Term<T>.Add);
 		}
 
+		/// <summary>
+		/// Multivariate Polynomial Subtraction.
+		/// </summary>
 		public static MultivariatePolynomial<T> Subtract(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
 			return OneToOneArithmetic(left, right, Term<T>.Subtract);
 		}
 
+		/// <summary>
+		/// Takes the Terms pair-wise from the two polynomials and performs some operation on them.
+		/// </summary>		
 		private static MultivariatePolynomial<T> OneToOneArithmetic(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right, Func<Term<T>, Term<T>, Term<T>> operation)
 		{
 			List<Term<T>> leftTermsList = CloneHelper<Term<T>>.CloneCollection(left.Terms).ToList();
@@ -634,6 +699,9 @@ namespace ExtendedArithmetic
 			return new MultivariatePolynomial<T>(leftTermsList.ToArray());
 		}
 
+		/// <summary>
+		/// Multivariate Polynomial Multiplication
+		/// </summary>
 		public static MultivariatePolynomial<T> Multiply(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
 			List<Term<T>> resultTerms = new List<Term<T>>();
@@ -664,6 +732,10 @@ namespace ExtendedArithmetic
 			return new MultivariatePolynomial<T>(resultTerms.ToArray());
 		}
 
+		/// <summary>
+		/// Multivariate Polynomial Exponentiation
+		/// </summary>
+		/// <exception cref="System.NotImplementedException">Raising a polynomial to a negative exponent not supported.</exception>
 		public static MultivariatePolynomial<T> Pow(MultivariatePolynomial<T> poly, int exponent)
 		{
 			if (exponent < 0)
@@ -690,6 +762,11 @@ namespace ExtendedArithmetic
 			return new MultivariatePolynomial<T>(result.Terms);
 		}
 
+		/// <summary>
+		/// Multivariate Polynomial Division.
+		/// </summary>
+		/// <exception cref="System.ArgumentNullException">left</exception>
+		/// <exception cref="System.ArgumentNullException">right</exception>
 		public static MultivariatePolynomial<T> Divide(MultivariatePolynomial<T> left, MultivariatePolynomial<T> right)
 		{
 			// Because multivariate polynomial division is a whole different beast,
@@ -817,6 +894,11 @@ namespace ExtendedArithmetic
 
 		#region Change Forms
 
+		/// <summary>
+		/// Gets the derivative of a polynomial with respect to a indeterminant.
+		/// </summary>
+		/// <param name="poly">The poly to find the derivative of.</param>
+		/// <param name="symbol">The symbol with witch to take the derivative with respect to.</param>
 		public static MultivariatePolynomial<T> GetDerivative(MultivariatePolynomial<T> poly, char symbol)
 		{
 			List<Term<T>> resultTerms = new List<Term<T>>();
@@ -900,16 +982,26 @@ namespace ExtendedArithmetic
 
 		#region Overrides and Interface implementations
 
+		/// <summary>
+		/// Clones this instance.
+		/// Rebuilds the polynomial with all new variables.
+		/// </summary>
 		public MultivariatePolynomial<T> Clone()
 		{
 			return new MultivariatePolynomial<T>(CloneHelper<Term<T>>.CloneCollection(Terms).ToArray());
 		}
 
+		/// <summary>
+		/// Returns true if the two polynomials are equal.
+		/// </summary>	
 		public bool Equals(MultivariatePolynomial<T> other)
 		{
 			return this.Equals(this, other);
 		}
 
+		/// <summary>
+		/// Returns true if the two polynomials are equal.
+		/// </summary>
 		public bool Equals(MultivariatePolynomial<T> x, MultivariatePolynomial<T> y)
 		{
 			if (x == null) { return (y == null) ? true : false; }
@@ -925,16 +1017,25 @@ namespace ExtendedArithmetic
 			return true;
 		}
 
+		/// <summary>
+		/// Returns true if the two polynomials are equal.
+		/// </summary>
 		public override bool Equals(object obj)
 		{
 			return this.Equals(obj as MultivariatePolynomial<T>);
 		}
 
+		/// <summary>
+		/// Returns a hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+		/// </summary>
 		public int GetHashCode(MultivariatePolynomial<T> obj)
 		{
 			return obj.GetHashCode();
 		}
 
+		/// <summary>
+		/// Returns a hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+		/// </summary>
 		public override int GetHashCode()
 		{
 			int hashCode = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this);
@@ -948,6 +1049,9 @@ namespace ExtendedArithmetic
 			return hashCode;
 		}
 
+		/// <summary>
+		/// Converts the polynomial of the current instance to its equivalent string representation.
+		/// </summary>
 		public override string ToString()
 		{
 			string signString = string.Empty;
