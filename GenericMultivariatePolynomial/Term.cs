@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace ExtendedArithmetic
 {
+
 	/// <summary>
 	/// Class Term.
 	/// Implements the <see cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.Term{T}}" />
@@ -70,9 +71,6 @@ namespace ExtendedArithmetic
 
 			if (ComplexHelperMethods.IsComplexValueType(typeof(T)))
 			{
-				parts[0] = parts[0].Replace("<", "(");
-				parts[0] = parts[0].Replace(">", ")");
-
 				if (parts[0].Contains('(') && parts[0].Contains(')'))
 				{
 					if (parts[0].StartsWith("-"))
@@ -488,6 +486,16 @@ namespace ExtendedArithmetic
 			{
 				coefficientString = "-";
 			}
+
+			coefficientString = coefficientString.Replace("<-0;", "<0;");
+			coefficientString = coefficientString.Replace("; -0>", "; 0>");
+
+			coefficientString = coefficientString.Replace("<", "(");
+			coefficientString = coefficientString.Replace(">", ")");
+			coefficientString = coefficientString.Replace(";", ",");
+
+			coefficientString = coefficientString.Replace("(-0,", "(0,");
+			coefficientString = coefficientString.Replace(", -0)", ", 0)");
 
 			return $"{coefficientString}{multiplyString}{variableString}";
 		}

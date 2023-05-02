@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net45;net46;net48;netcoreapp3.1;netstandard2.1;net5.0;net6.0</TargetFrameworks>
+		<TargetFrameworks>net45;net46;net48;netcoreapp3.1;netstandard2.1;net5.0;net6.0;net7.0</TargetFrameworks>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -33,7 +33,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="ExtendedArithmetic.GenericArithmetic" Version="2023.119.2236" />
+	  <PackageReference Include="ExtendedArithmetic.GenericArithmetic" Version="2023.122.900" />
 	</ItemGroup>
 	
 </Project>

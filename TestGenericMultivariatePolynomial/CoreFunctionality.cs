@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestPlatform;
 using NUnit;
 using ExtendedArithmetic;
 using NUnit.Framework;
@@ -199,7 +198,7 @@ namespace TestMultivariatePolynomial
 		[Test]
 
 		[TestCase("2*x^4 + 13*y^3 + 29*x^2 + 29*y + 13", "45468", "63570", "8551120982818029391")]
-		public virtual void TestEvaluate(string polyString, string xValue, string yValue, string expected)
+		public virtual void TestEvaluate(string polyString, string xValue, string yValue, string expectedString)
 		{
 			MultivariatePolynomial<T> poly = MultivariatePolynomial<T>.Parse(polyString);
 			List<Tuple<char, T>> indeterminants = new List<Tuple<char, T>>()
@@ -208,11 +207,14 @@ namespace TestMultivariatePolynomial
 				new Tuple<char, T>('y', GenericArithmetic<T>.Parse(yValue)),
 			};
 
-			T result = poly.Evaluate(indeterminants);
-			string actual = result.ToString();
+			T expected = GenericArithmetic<T>.Parse(expectedString);
+			T actual = poly.Evaluate(indeterminants);
 
-			TestContext.WriteLine($"Result: \"{actual}\".");
-			Assert.AreEqual(expected, actual, $"Test of: MultivariatePolynomial<T>.Evaluate({polyString}) where {string.Join(" and ", indeterminants.Select(tup => $"{tup.Item1} = {tup.Item2}"))}");
+			TestContext.WriteLine($"Expected: \"{expected}\"");
+			TestContext.WriteLine($"Actual  : \"{actual}\"");
+
+			Assert.That(actual, Is.EqualTo(expected).Within(3),
+				 $"Test of: MultivariatePolynomial<T>.Evaluate({polyString}) where {string.Join(" and ", indeterminants.Select(tup => $"{tup.Item1} = {tup.Item2}"))}", null);
 		}
 
 

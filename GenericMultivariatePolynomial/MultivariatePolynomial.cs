@@ -327,7 +327,7 @@ namespace ExtendedArithmetic
 						term.Variables
 						.Select(indetrmnt =>
 							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
-											  .Select(tup => GenericArithmetic<T>.Power(tup.Item2, indetrmnt.Exponent))
+											  .Select(tup => GenericArithmetic<T>.PowerInt(tup.Item2, indetrmnt.Exponent))
 											  .FirstOrDefault()
 						);
 

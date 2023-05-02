@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Numerics;
-using Microsoft.VisualStudio.TestPlatform;
 using NUnit;
 using NUnit.Framework;
 using ExtendedArithmetic;
