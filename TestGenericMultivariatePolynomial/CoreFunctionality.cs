@@ -66,8 +66,28 @@ namespace TestGenericMultivariatePolynomial
 			Assert.IsFalse(testOne.Terms.All(trm => trm.Variables.Any()), "one.Terms.All(trm => trm.Variables.Any())");
 			Assert.IsFalse(testTwo.Terms.All(trm => trm.Variables.Any()), "two.Terms.All(trm => trm.Variables.Any())");
 
-			Term<T> term1 = Term<T>.Parse("1");
-			Assert.IsFalse(term1.Variables.Any(), "Term.Parse(\"1\").Variables.Any()");
+			Term<T> termConstant = Term<T>.Parse("1");
+			Assert.IsFalse(termConstant.Variables.Any(), "Term.Parse(\"1\").Variables.Any()");
+		}
+
+		[Test]
+		[TestCase("-7*W*X^2*Y^2*Z^3")]
+		public virtual void TestParse_Term(string termString)
+		{
+			Term<T> termNotEmpty = Term<T>.Parse(termString);
+
+			string testMessage1 = $"Term.Parse(\"{termString}\").Variables.Any() == True";
+			string testMessage2 = $"Term.Parse(\"{termString}\").CoEfficient == -7";
+			string testMessage3 = $"Term.Parse(\"{termString}\").ToString() == \"{termString}\"";
+
+			Assert.IsTrue(termNotEmpty.Variables.Any(), testMessage1);
+			TestContext.WriteLine(testMessage1);
+
+			Assert.IsTrue(GenericArithmetic<T>.Equal(termNotEmpty.CoEfficient, GenericArithmetic<T>.Parse("-7")), testMessage2);
+			TestContext.WriteLine(testMessage2);
+
+			Assert.AreEqual(termString, termNotEmpty.ToString(), testMessage3);
+			TestContext.WriteLine(testMessage3);
 		}
 
 		[Test]

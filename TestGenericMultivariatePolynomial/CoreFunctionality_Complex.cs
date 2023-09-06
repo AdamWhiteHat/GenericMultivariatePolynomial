@@ -24,6 +24,12 @@ namespace TestGenericMultivariatePolynomial
 			base.TestParse002(expected1, expected2, expected3);
 		}
 
+		[Test]
+		[TestCase("(-7, 0)*W*X^2*Y^2*Z^3")]
+		public override void TestParse_Term(string termString)
+		{
+			base.TestParse_Term(termString);
+		}
 
 		[Test]
 		[TestCase("12", "(12, 0)")]

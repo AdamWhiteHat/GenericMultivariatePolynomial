@@ -17,6 +17,8 @@ namespace ExtendedArithmetic
 	/// <seealso cref="System.Collections.Generic.IEqualityComparer{ExtendedArithmetic.Indeterminate}" />
 	public class Indeterminate : ICloneable<Indeterminate>, IEquatable<Indeterminate>, IEqualityComparer<Indeterminate>
 	{
+		#region Public Properties
+
 		/// <summary>
 		/// Gets the indeterminate's symbol.
 		/// </summary>
@@ -26,6 +28,10 @@ namespace ExtendedArithmetic
 		/// Gets the indeterminate's exponent.
 		/// </summary>
 		public int Exponent { get; }
+
+		#endregion
+
+		#region Internal and Private Fields
 
 		/// <summary>
 		/// Gets the empty indeterminate.
@@ -45,7 +51,9 @@ namespace ExtendedArithmetic
 			UnicodeCategory.MathSymbol
 		};
 
-		#region Constructor & Parse
+		#endregion
+
+		#region Constructor and Parse
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Indeterminate"/> class, given the symbol and the exponent.

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 namespace ExtendedArithmetic
 {
-
 	/// <summary>
 	/// Class Term.
 	/// Implements the <see cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.Term{T}}" />
@@ -18,6 +17,17 @@ namespace ExtendedArithmetic
 	/// <seealso cref="System.Collections.Generic.IEqualityComparer{ExtendedArithmetic.Term{T}}" />
 	public class Term<T> : ICloneable<Term<T>>, IEquatable<Term<T>>, IEqualityComparer<Term<T>>
 	{
+		#region Static Members
+
+		/// <summary>
+		/// Gets a the static value that represents the zero Term.
+		/// </summary>
+		public static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Zero);
+
+		#endregion
+
+		#region Public Properties
+
 		/// <summary>
 		/// Gets or sets the coefficient.
 		/// </summary>
@@ -33,17 +43,9 @@ namespace ExtendedArithmetic
 		/// </summary>
 		public int Degree { get { return Variables.Any() ? Variables.Select(v => v.Exponent).Sum() : 0; } }
 
-		/// <summary>
-		/// Gets a the static value that represents the empty Term.
-		/// </summary>
-		public static Term<T> Empty = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Empty);
+		#endregion
 
-		/// <summary>
-		/// Gets a the static value that represents the zero Term.
-		/// </summary>
-		public static Term<T> Zero = new Term<T>(GenericArithmetic<T>.Zero, Indeterminate.Zero);
-
-		#region Constructor & Parse
+		#region Constructor and Parse
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Term{T}"/> class, taking a coefficient and an array of indeterminates.
@@ -60,7 +62,7 @@ namespace ExtendedArithmetic
 		/// Constructs a new Term from its string representation.
 		/// </summary>
 		/// <exception cref="System.ArgumentException"></exception>
-		internal static Term<T> Parse(string termString)
+		public static Term<T> Parse(string termString)
 		{
 			if (string.IsNullOrWhiteSpace(termString)) { throw new ArgumentException(); }
 
@@ -110,7 +112,7 @@ namespace ExtendedArithmetic
 
 		#endregion
 
-		#region Internal Helper Methods
+		#region Internal Methods
 
 		/// <summary>
 		/// Returns true if the two Terms share a common factor.
@@ -255,7 +257,52 @@ namespace ExtendedArithmetic
 
 		#endregion
 
-		#region Arithmetic
+		#region Evaluate
+
+		/// <summary>
+		/// Evaluates the term at the specified indeterminate values.
+		/// </summary>		
+		public static T Evaluate(Term<T> term, List<Tuple<char, T>> indeterminateValue)
+		{
+			return term.Evaluate(indeterminateValue);
+		}
+
+		/// <summary>
+		/// Evaluates the term at the specified indeterminate values.
+		/// </summary>		
+		public T Evaluate(List<Tuple<char, T>> indeterminateValues)
+		{
+			if (GenericArithmetic<T>.Equal(CoEfficient, GenericArithmetic<T>.Zero))
+			{
+				return GenericArithmetic<T>.Zero;
+			}
+
+			if (!Variables.Any())
+			{
+				return CoEfficient;
+			}
+
+			var variableValues =
+				Variables
+				.Select(indetrmnt =>
+					indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
+									  .Select(tup => GenericArithmetic<T>.PowerInt(tup.Item2, indetrmnt.Exponent))
+									  .FirstOrDefault()
+				);
+
+			if (!variableValues.Any())
+			{
+				return GenericArithmetic<T>.Zero;
+			}
+
+			T placeValue = variableValues.Aggregate(GenericArithmetic<T>.Multiply);
+			T result = GenericArithmetic<T>.Multiply(CoEfficient, placeValue);
+			return result;
+		}
+
+		#endregion
+
+		#region Static Arithmetic Operations
 
 		/// <summary>
 		/// Adds two terms together and produces a third.
@@ -334,7 +381,7 @@ namespace ExtendedArithmetic
 		/// </summary>
 		public static Term<T> Divide(Term<T> left, Term<T> right)
 		{
-			if (!Term<T>.ShareCommonFactor(left, right)) { return Empty; }
+			if (!Term<T>.ShareCommonFactor(left, right)) { return Zero; }
 
 			T newCoefficient = GenericArithmetic<T>.Divide(left.CoEfficient, right.CoEfficient);
 

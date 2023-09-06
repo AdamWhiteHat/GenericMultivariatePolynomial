@@ -16,6 +16,8 @@ namespace ExtendedArithmetic
 	/// <seealso cref="ExtendedArithmetic.ICloneable{ExtendedArithmetic.MultivariatePolynomial{T}}" />
 	public class MultivariatePolynomial<T> : ICloneable<MultivariatePolynomial<T>>
 	{
+		#region Public Properties
+
 		/// <summary>
 		/// Indexer for the polynomial Terms
 		/// </summary>
@@ -26,7 +28,9 @@ namespace ExtendedArithmetic
 		/// </summary>
 		public int Degree { get { return Terms.Any() ? Terms.Select(t => t.Degree).Max() : 0; } }
 
-		#region Constructor & Parse
+		#endregion
+
+		#region Constructor and Parse
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MultivariatePolynomial{T}"/> class from an array of Terms.
@@ -85,6 +89,13 @@ namespace ExtendedArithmetic
 			return new MultivariatePolynomial<T>(terms);
 		}
 
+		#endregion
+
+		#region Internal and Private Methods
+
+		/// <summary>
+		/// Allows strings with coefficients of Complex type to be parsed, as they have the form (1, 0)*X^2 + ...
+		/// </summary>		
 		internal static string RewriteComplexPolynomial(string complexPolynomialString)
 		{
 			// Normally minus signs between terms is handled by replacing "-" with "+-" and splitting by "+" into terms.
@@ -314,30 +325,24 @@ namespace ExtendedArithmetic
 		/// <summary>
 		/// Evaluates the polynomial at the specified indeterminate values.
 		/// </summary>		
+		public static T Evaluate(MultivariatePolynomial<T> polynomial, List<Tuple<char, T>> indeterminateValue)
+		{
+			return polynomial.Evaluate(indeterminateValue);
+		}
+
+		/// <summary>
+		/// Evaluates the polynomial at the specified indeterminate values.
+		/// </summary>		
 		public T Evaluate(List<Tuple<char, T>> indeterminateValues)
 		{
 			T result = GenericArithmetic<T>.Zero;
 			foreach (Term<T> term in Terms)
 			{
-				T termValue = term.CoEfficient;
-
-				if (term.Variables.Any())
+				T termValue = term.Evaluate(indeterminateValues);
+				if (!GenericArithmetic<T>.Equal(termValue, GenericArithmetic<T>.Zero))
 				{
-					var variableValues =
-						term.Variables
-						.Select(indetrmnt =>
-							indeterminateValues.Where(tup => tup.Item1 == indetrmnt.Symbol)
-											  .Select(tup => GenericArithmetic<T>.PowerInt(tup.Item2, indetrmnt.Exponent))
-											  .FirstOrDefault()
-						);
-
-					if (variableValues.Any())
-					{
-						termValue = GenericArithmetic<T>.Multiply(termValue, variableValues.Aggregate(GenericArithmetic<T>.Multiply));
-					}
+					result = GenericArithmetic<T>.Add(result, termValue);
 				}
-
-				result = GenericArithmetic<T>.Add(result, termValue);
 			}
 			return result;
 		}
@@ -386,8 +391,7 @@ namespace ExtendedArithmetic
 
 		#endregion
 
-		#region Arithmetic
-
+		#region Static Arithmetic Operations
 
 		/// <summary>
 		/// GCDs the specified left.
@@ -843,7 +847,7 @@ namespace ExtendedArithmetic
 
 						if (index == 0)
 						{
-							newTerm = new Term<T>(q, Indeterminate.Empty);
+							newTerm = new Term<T>(q, Indeterminate.Zero);
 						}
 						else
 						{
@@ -871,7 +875,7 @@ namespace ExtendedArithmetic
 						{
 							leftTermsList.Remove(matchTerm);
 							Term<T> quotient = Term<T>.Divide(matchTerm, rightTerm);
-							if (quotient != Term<T>.Empty)
+							if (quotient != Term<T>.Zero)
 							{
 								if (!newTermsList.Any(lt => lt.Equals(quotient)))
 								{
