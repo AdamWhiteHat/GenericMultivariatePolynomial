@@ -6,7 +6,7 @@ using NUnit;
 using ExtendedArithmetic;
 using NUnit.Framework;
 
-namespace TestMultivariatePolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestFixture(Category = "CoreFunctionality")]
 	public class CoreFunctionality<T>
@@ -228,7 +228,7 @@ namespace TestMultivariatePolynomial
 			string debug = string.Join(Environment.NewLine,
 				poly.Terms.Select(
 					   trm =>
-							$"Deg:{trm.Degree} Var.Cnt:{trm.VariableCount()} CoEff:{trm.CoEfficient} {string.Join("", trm.Variables.Select(ind => ind.Symbol).OrderBy(c => c).ToList())} => {trm.ToString()}"));
+							$"Deg:{trm.Degree} Var.Cnt:{{trm.VariableCount()}} CoEff:{trm.CoEfficient} {string.Join("", trm.Variables.Select(ind => ind.Symbol).OrderBy(c => c).ToList())} => {trm.ToString()}"));
 			TestContext.WriteLine($"Term Info:");
 			TestContext.WriteLine(debug);
 

@@ -11,10 +11,15 @@
 		<Product>TestGenericMultivariatePolynomial</Product>
 		<RootNamespace>TestGenericMultivariatePolynomial</RootNamespace>
 		<AssemblyName>TestGenericMultivariatePolynomial</AssemblyName>
-		
+
 		<Version>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</Version>
 		<AssemblyVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</AssemblyVersion>
 		<FileVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</FileVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>..\StrongNameSigningKey.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 
 	<ItemGroup>

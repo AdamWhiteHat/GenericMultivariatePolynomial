@@ -2,9 +2,9 @@
 using System.Numerics;
 using ExtendedArithmetic;
 using NUnit.Framework;
-using TestMultivariatePolynomial;
+using TestGenericMultivariatePolynomial;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestOf(typeof(Int32))]
 	[TestFixture(Category = "Arithmetic - Int32")]

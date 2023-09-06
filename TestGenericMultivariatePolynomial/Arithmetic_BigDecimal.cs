@@ -2,9 +2,9 @@
 using ExtendedArithmetic;
 using ExtendedNumerics;
 using NUnit.Framework;
-using TestMultivariatePolynomial;
+using TestGenericMultivariatePolynomial;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestOf(typeof(BigDecimal))]
 	[TestFixture(Category = "Arithmetic - BigDecimal")]

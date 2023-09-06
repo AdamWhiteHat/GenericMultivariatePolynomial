@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
 using ExtendedArithmetic;
 using NUnit.Framework;
-using TestMultivariatePolynomial;
+using TestGenericMultivariatePolynomial;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestOf(typeof(double))]
 	[TestFixture(Category = "Arithmetic - Double")]

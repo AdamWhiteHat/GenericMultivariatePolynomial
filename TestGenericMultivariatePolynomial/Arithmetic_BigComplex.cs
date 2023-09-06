@@ -3,9 +3,9 @@ using ExtendedArithmetic;
 using ExtendedNumerics;
 using ExtendedNumerics.ExtensionMethods;
 using NUnit.Framework;
-using TestMultivariatePolynomial;
+using TestGenericMultivariatePolynomial;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestOf(typeof(BigComplex))]
 	[TestFixture(Category = "Arithmetic - BigComplex")]

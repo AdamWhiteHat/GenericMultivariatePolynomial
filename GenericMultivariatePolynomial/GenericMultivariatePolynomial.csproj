@@ -20,20 +20,32 @@
 		<PackageProjectUrl>https://www.nuget.org/packages/ExtendedArithmetic.GenericMultivariatePolynomial/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/AdamWhiteHat/GenericMultivariatePolynomial</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-
-		<Version>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</Version>
-		<AssemblyVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</AssemblyVersion>
-		<FileVersion>$([System.DateTime]::Now.ToString("yyyy."$([System.DateTime]::Now.DayOfYear)".HHmm"))</FileVersion>
 		<NeutralLanguage>en</NeutralLanguage>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<MajorVersion Condition=" '$(MajorVersion)' == '' ">2023</MajorVersion>
+		<MinorVersion Condition=" '$(MinorVersion)' == '' ">200</MinorVersion>
+		<PatchVersion Condition=" '$(PatchVersion)' == '' ">0</PatchVersion>
+		<BuildTimestamp>$([System.DateTime]::Now.DayOfYear.ToString().PadLeft(3,'0'))</BuildTimestamp>
+
+		<Version>$(MajorVersion).$(MinorVersion).$(PatchVersion)</Version>
+		<AssemblyVersion>$(Version).$(BuildTimestamp)</AssemblyVersion>
+		<PackageVersion>$(AssemblyVersion)</PackageVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>..\StrongNameSigningKey.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+
 	<ItemGroup>
-	    <None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="ExtendedArithmetic.GenericArithmetic" Version="2023.122.900" />
+		<PackageReference Include="ExtendedArithmetic.GenericArithmetic" Version="2023.122.900" />
 	</ItemGroup>
-	
+
 </Project>

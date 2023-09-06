@@ -6,7 +6,7 @@ using NUnit;
 using NUnit.Framework;
 using ExtendedArithmetic;
 
-namespace TestMultivariatePolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestFixture(Category = "Arithmetic")]
 	public class Arithmetic<T>

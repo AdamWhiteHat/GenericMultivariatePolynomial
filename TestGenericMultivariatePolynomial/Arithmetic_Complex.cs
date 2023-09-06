@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
 using ExtendedArithmetic;
 using NUnit.Framework;
-using TestMultivariatePolynomial;
+using TestGenericMultivariatePolynomial;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	[TestOf(typeof(Complex))]
 	[TestFixture(Category = "Arithmetic - Complex")]
@@ -198,7 +198,7 @@ namespace TestGenericPolynomial
 			string input = "-(3, 0)*X - Y - (1, 0)";
 			string expected = "(-3,0)*X+(-1,0)*Y+(-1,0)";
 
-			string actual = MultivariatePolynomial<Complex>.RewriteComplexPolynomial(input);
+			string actual =  MultivariatePolynomial<Complex>.RewriteComplexPolynomial(input);
 
 			TestContext.WriteLine($"Expected: {expected}");
 			TestContext.WriteLine($"  Actual: {actual}");

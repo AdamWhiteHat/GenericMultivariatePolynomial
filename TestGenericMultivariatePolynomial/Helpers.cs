@@ -4,7 +4,7 @@ using System.Numerics;
 using ExtendedArithmetic;
 using ExtendedNumerics;
 
-namespace TestGenericPolynomial
+namespace TestGenericMultivariatePolynomial
 {
 	public static class Helpers
 	{
